@@ -146,6 +146,17 @@ function hasUrl(node: chrome.bookmarks.BookmarkTreeNode): boolean {
 
 // Restore from snapshot: wipe the scope's current children and recreate.
 export async function restoreSnapshot(snapshot: Snapshot): Promise<void> {
+  // Clear whatever the apply pass left in each scope root (the spread category
+  // folders, Unsorted, leftover loose bookmarks) so the restore doesn't stack
+  // the original tree on top of the generated one.
+  for (const parentId of snapshot.scopeParentIds) {
+    const [root] = await chrome.bookmarks.getSubTree(parentId);
+    for (const child of root?.children ?? []) {
+      if (child.url) await chrome.bookmarks.remove(child.id);
+      else await chrome.bookmarks.removeTree(child.id);
+    }
+  }
+
   // Recreate every saved leaf under its original folder path.
   const pathId = new Map<string, string>();
   const ensurePath = async (path: string[]): Promise<string> => {
