@@ -2,7 +2,8 @@ import { taxonomySchema, TAXONOMY_HINT } from './schema';
 import { generateJson, type Usage } from './json';
 import type { FlatBookmark, Settings, Taxonomy } from '../types';
 
-const SYSTEM = `You organize browser bookmarks. Given titles and URLs, propose 8-15 top-level categories that cleanly cover them. Each category may have a few sub-categories (max one level deep). Feel free to merge, rename, or consolidate similar topics — e.g. "immigration-platform", "immigration-process", "immigration-tool" → "Immigration". Produce clean, broad categories, not a copy of the existing folder structure.`;
+const SYSTEM = `Group bookmarks into 8-15 categories. Single word per name. Abbreviate. Merge similar. No articles. Tight.
+Example: "react-hooks" + "react-state" + "react-router" → "react"`;
 
 // Pass 1: read all bookmarks and propose a taxonomy.
 // `configSeeds` = user's explicitly configured seed categories (guaranteed to survive).

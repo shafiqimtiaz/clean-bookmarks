@@ -40,13 +40,37 @@ export async function readScope(
   };
 
   for (const parentId of scopeParentIds) {
-    const [root] = await chrome.bookmarks.getSubTree(parentId);
+    let effectiveId = parentId;
+    let root: chrome.bookmarks.BookmarkTreeNode | undefined;
+    try {
+      [root] = await chrome.bookmarks.getSubTree(parentId);
+    } catch {
+      // Chrome root was deleted — find the replacement by name.
+      try {
+        const kids = await chrome.bookmarks.getChildren('0');
+        const replacement = (kids as chrome.bookmarks.BookmarkTreeNode[]).find(
+          k => k.title.toLowerCase().includes('other bookmark')
+        );
+        if (replacement) {
+          effectiveId = replacement.id;
+          [root] = await chrome.bookmarks.getSubTree(replacement.id);
+          // Swap the id in scopeParentIds so the rest of the code uses the real id.
+          const idx = scopeParentIds.indexOf(parentId);
+          if (idx !== -1) scopeParentIds[idx] = effectiveId;
+          console.warn(`[readScope] Replaced stale root ${parentId} → ${effectiveId} ("${replacement.title}")`);
+        }
+      } catch { /* give up */ }
+      if (!root) {
+        console.warn(`[readScope] Root ${parentId} not found — skipping`);
+        continue;
+      }
+    }
     for (const child of root?.children ?? []) {
       if (child.url) {
-        flat.push({ idx: idx++, id: child.id, title: child.title || child.url, url: child.url, root: parentId });
+        flat.push({ idx: idx++, id: child.id, title: child.title || child.url, url: child.url, root: effectiveId });
       } else if (!child.title.startsWith(ORGANIZED_FOLDER_PREFIX)) {
         folderNames.add(child.title);
-        collect(child, parentId);
+        collect(child, effectiveId);
       }
     }
   }
@@ -58,7 +82,13 @@ export async function readScope(
 export async function snapshotScope(scopeParentIds: string[]): Promise<Snapshot> {
   const nodes: SerializedNode[] = [];
   for (const parentId of scopeParentIds) {
-    const [root] = await chrome.bookmarks.getSubTree(parentId);
+    let root: chrome.bookmarks.BookmarkTreeNode | undefined;
+    try {
+      [root] = await chrome.bookmarks.getSubTree(parentId);
+    } catch {
+      console.warn('[snapshotScope] Skipping missing root:', parentId);
+      continue;
+    }
     if (!root) continue;
     const collect = (node: chrome.bookmarks.BookmarkTreeNode, path: string[]) => {
       for (const child of node.children ?? []) {
@@ -95,30 +125,37 @@ export async function applyOrganization(
       const existing = folderId.get(key);
       if (existing) return existing;
       const parent = sub ? await ensureFolder(cat) : rootId;
-      const node = await chrome.bookmarks.create({ parentId: parent, title: sub ?? cat });
-      folderId.set(key, node.id);
-      createdIds.add(node.id);
-      return node.id;
+      try {
+        const node = await chrome.bookmarks.create({ parentId: parent, title: sub ?? cat });
+        folderId.set(key, node.id);
+        createdIds.add(node.id);
+        return node.id;
+      } catch (e) {
+        console.error('[applyOrg] create folder failed', JSON.stringify({ cat, sub, parent }), e);
+        return rootId; // fall back to root
+      }
     };
 
     for (const bm of bookmarks.filter((b) => b.root === rootId)) {
-      // Bookmarks titled with a bare number (e.g. "197") are unreadable once
-      // sorted — rename them to their URL host (e.g. "chat.inceptionlabs.ai").
       const title = displayTitle(bm.title, bm.url);
-      if (title !== bm.title) await chrome.bookmarks.update(bm.id, { title });
-
-      const a = byIdx.get(bm.idx);
-      if (!a) {
-        await moveTo(bm.id, await ensureFolder(UNSORTED_FOLDER));
-        unsorted++;
+      try {
+        if (title !== bm.title) await chrome.bookmarks.update(bm.id, { title });
+      } catch (e) {
+        console.error('[applyOrg] update title failed', bm.id, e);
         continue;
       }
-      await moveTo(bm.id, await ensureFolder(a.cat, a.sub));
-      moved++;
+
+      const a = byIdx.get(bm.idx);
+      const dest = a ? await ensureFolder(a.cat, a.sub) : await ensureFolder(UNSORTED_FOLDER);
+      try {
+        await chrome.bookmarks.move(bm.id, { parentId: dest });
+        if (!a) unsorted++;
+        else moved++;
+      } catch (e) {
+        console.error('[applyOrg] move failed', bm.id, '→', dest, e);
+      }
     }
 
-    // Drop the now-empty original folders (their bookmarks moved out), leaving
-    // a clean root with just the freshly spread category folders.
     await removeEmptyFolders(rootId, createdIds);
   }
 
@@ -132,11 +169,24 @@ async function moveTo(id: string, parentId: string): Promise<void> {
 // Remove top-level folders under `rootId` that contain no bookmarks (and only
 // empty sub-folders). Never touches folders we created this run.
 async function removeEmptyFolders(rootId: string, keepIds: Set<string>): Promise<void> {
-  const [root] = await chrome.bookmarks.getSubTree(rootId);
+  let root;
+  try {
+    [root] = await chrome.bookmarks.getSubTree(rootId);
+  } catch (e) {
+    console.error('[removeEmptyFolders] getSubTree failed', rootId, e);
+    return;
+  }
+  if (!root) return;
   for (const child of root?.children ?? []) {
-    if (child.url) continue; // a loose bookmark, not a folder
+    if (child.url) continue;
     if (keepIds.has(child.id) || child.title.startsWith(ORGANIZED_FOLDER_PREFIX)) continue;
-    if (!hasUrl(child)) await chrome.bookmarks.removeTree(child.id);
+    if (!hasUrl(child)) {
+      try {
+        await chrome.bookmarks.removeTree(child.id);
+      } catch (e) {
+        console.error('[removeEmptyFolders] removeTree failed', child.id, e);
+      }
+    }
   }
 }
 
@@ -146,36 +196,55 @@ function hasUrl(node: chrome.bookmarks.BookmarkTreeNode): boolean {
 
 // Restore from snapshot: wipe the scope's current children and recreate.
 export async function restoreSnapshot(snapshot: Snapshot): Promise<void> {
-  // Clear whatever the apply pass left in each scope root (the spread category
-  // folders, Unsorted, leftover loose bookmarks) so the restore doesn't stack
-  // the original tree on top of the generated one.
+  // Clear whatever the apply pass left in each scope root.
   for (const parentId of snapshot.scopeParentIds) {
-    const [root] = await chrome.bookmarks.getSubTree(parentId);
+    let root;
+    try {
+      [root] = await chrome.bookmarks.getSubTree(parentId);
+    } catch (e) {
+      console.error('[restoreSnapshot] getSubTree failed (wipe)', parentId, e);
+      continue;
+    }
+    if (!root) continue;
     for (const child of root?.children ?? []) {
-      if (child.url) await chrome.bookmarks.remove(child.id);
-      else await chrome.bookmarks.removeTree(child.id);
+      try {
+        if (child.url) await chrome.bookmarks.remove(child.id);
+        else await chrome.bookmarks.removeTree(child.id);
+      } catch (e) {
+        console.error('[restoreSnapshot] remove/removeTree failed', child.id, e);
+      }
     }
   }
 
   const pathId = new Map<string, string>();
-  const ensurePath = async (path: string[]): Promise<string> => {
+  const ensurePath = async (path: string[]): Promise<string | null> => {
     let parentId = path[0]!;
     let acc = path[0]!;
     for (let i = 1; i < path.length; i++) {
       acc += '/' + path[i];
       let id = pathId.get(acc);
       if (!id) {
-        const node = await chrome.bookmarks.create({ parentId, title: path[i]! });
-        id = node.id;
-        pathId.set(acc, id);
+        try {
+          const node = await chrome.bookmarks.create({ parentId, title: path[i]! });
+          id = node.id;
+          pathId.set(acc, id);
+        } catch (e) {
+          console.error('[restoreSnapshot] ensurePath create failed', parentId, path[i], e);
+          return null;
+        }
       }
       parentId = id;
     }
     return parentId;
   };
   for (const node of snapshot.nodes) {
-    const parentId = await ensurePath(node.parentTitlePath);
-    await chrome.bookmarks.create({ parentId, title: node.title, url: node.url });
+    try {
+      const parentId = await ensurePath(node.parentTitlePath);
+      if (parentId === null) continue;
+      await chrome.bookmarks.create({ parentId, title: node.title, url: node.url });
+    } catch (e) {
+      console.error('[restoreSnapshot] create bookmark failed', node.title, e);
+    }
   }
 }
 
