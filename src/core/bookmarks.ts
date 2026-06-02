@@ -169,9 +169,10 @@ export async function restoreSnapshot(snapshot: Snapshot): Promise<void> {
   }
 }
 
-// Bare-number titles ("197") → URL host. Anything else (incl. empty) is kept.
+// Empty or bare-number titles ("", "197") → URL host. Real titles are kept.
 function displayTitle(title: string, url: string): string {
-  if (!/^\d+$/.test(title.trim())) return title;
+  const t = title.trim();
+  if (t && !/^\d+$/.test(t)) return title;
   try {
     return new URL(url).host;
   } catch {

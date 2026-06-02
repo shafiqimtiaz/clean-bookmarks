@@ -43,8 +43,9 @@ export class OrganizeRun {
     this.set({ phase: 'pass1', total: this.bookmarks.length });
 
     const settings = await getSettings();
-    const seeds = [...new Set([...settings.seedCategories, ...read.data.folderNames])];
-    const { taxonomy, usage } = await proposeTaxonomy(settings, this.bookmarks, seeds);
+    const configSeeds = [...new Set(settings.seedCategories)];
+    const folderHints = [...new Set(read.data.folderNames)];
+    const { taxonomy, usage } = await proposeTaxonomy(settings, this.bookmarks, configSeeds, folderHints);
     this.taxonomy = taxonomy;
     this.set({
       phase: 'review',

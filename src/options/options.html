@@ -3,21 +3,45 @@
   <head>
     <meta charset="utf-8" />
     <style>
-      body { max-width: 520px; margin: 40px auto; font: 14px system-ui, sans-serif; color: #1e293b; padding: 0 16px; }
-      h1 { font-size: 18px; }
-      label { display: block; margin: 16px 0 4px; font-weight: 600; }
-      input, select { width: 100%; padding: 8px; border: 1px solid #cbd5e1; border-radius: 6px; box-sizing: border-box; background: #fff; }
-      input:disabled { background: #f1f5f9; color: #64748b; }
-      .hint { color: #64748b; font-size: 12px; margin-top: 4px; }
-      button { margin-top: 20px; padding: 9px 16px; border: 0; border-radius: 6px; background: #2563eb; color: #fff; cursor: pointer; }
-      .saved { color: #16a34a; margin-left: 10px; }
-      .row { display: flex; gap: 8px; align-items: center; }
-      .icon-btn { margin-top: 0; padding: 8px 10px; background: #f1f5f9; color: #334155; flex-shrink: 0; }
+      /* Neumorphism — matches the main app. */
+      :root {
+        --bg: #e7e5e4; --fg: #1e2938; --muted: #6b7280;
+        --primary: #006666; --primary-fg: #ffffff; --success: #00a63d;
+        --light: #ffffff; --dark: #bcbab9;
+        --out: 5px 5px 12px var(--dark), -5px -5px 12px var(--light);
+        --in: inset 4px 4px 8px var(--dark), inset -4px -4px 8px var(--light);
+        --r-sm: 8px; --r-md: 16px;
+        --mono: "Space Mono", ui-monospace, "JetBrains Mono", Menlo, Consolas, monospace;
+      }
+      [data-theme="dark"] {
+        --bg: #292d36; --fg: #e2e8f0; --muted: #94a3b8;
+        --primary: #2dd4bf; --primary-fg: #04201d; --success: #4ade80;
+        --light: #333845; --dark: #1d2027;
+      }
+      * { box-sizing: border-box; }
+      body { max-width: 520px; margin: 40px auto; font: 14px/1.5 var(--mono); color: var(--fg); background: var(--bg); padding: 24px; border-radius: var(--r-md); box-shadow: var(--out); }
+      h1 { font-size: 1.5rem; font-weight: 700; }
+      label { display: block; margin: 18px 0 6px; font-weight: 700; }
+      input, select { width: 100%; font-family: var(--mono); padding: 11px 14px; border: 0; border-radius: var(--r-sm); background: var(--bg); color: var(--fg); box-shadow: var(--in); }
+      input:focus, select:focus { outline: none; box-shadow: var(--in), 0 0 0 2px var(--primary); }
+      input:disabled { color: var(--muted); }
+      .hint { color: var(--muted); font-size: 12px; margin-top: 6px; }
+      button { font-family: var(--mono); font-weight: 700; margin-top: 22px; padding: 11px 18px; border: 0; border-radius: var(--r-sm); background: var(--bg); color: var(--primary); cursor: pointer; box-shadow: var(--out); transition: box-shadow .15s, transform .05s; }
+      button:hover { transform: translateY(-1px); }
+      button:active { box-shadow: var(--in); transform: translateY(0); }
+      .saved { color: var(--success); margin-left: 12px; font-weight: 700; }
+      .row { display: flex; gap: 10px; align-items: center; }
+      .icon-btn { margin-top: 0; padding: 11px 13px; color: var(--fg); flex-shrink: 0; }
+      .head { display: flex; align-items: center; justify-content: space-between; }
+      #themeToggle { margin-top: 0; padding: 9px 12px; border-radius: 999px; font-size: 15px; color: var(--fg); }
       [hidden] { display: none !important; }
     </style>
   </head>
   <body>
-    <h1>Clean Bookmarks — Settings</h1>
+    <div class="head">
+      <h1>Clean Bookmarks — Settings</h1>
+      <button id="themeToggle" type="button" title="Toggle light/dark">🌙</button>
+    </div>
     <p class="hint">
       Bring your own key. Your bookmark titles and URLs are sent only to the endpoint
       below. The key is stored locally in your browser and never synced.

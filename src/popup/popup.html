@@ -3,13 +3,29 @@
   <head>
     <meta charset="utf-8" />
     <style>
-      body { width: 280px; margin: 0; font: 13px system-ui, sans-serif; padding: 14px; }
-      h1 { font-size: 14px; margin: 0 0 10px; }
-      button { width: 100%; padding: 9px; border: 0; border-radius: 6px; cursor: pointer; font-size: 13px; }
-      .primary { background: #2563eb; color: #fff; }
-      .ghost { background: #f1f5f9; color: #334155; margin-top: 8px; }
-      .status { color: #64748b; margin: 10px 0; min-height: 16px; }
-      a { color: #2563eb; text-decoration: none; font-size: 12px; display: inline-block; margin-top: 10px; }
+      /* Neumorphism — matches the main app. */
+      :root {
+        --bg: #e7e5e4; --fg: #1e2938; --muted: #6b7280;
+        --primary: #006666; --light: #ffffff; --dark: #bcbab9;
+        --out: 5px 5px 12px var(--dark), -5px -5px 12px var(--light);
+        --in: inset 4px 4px 8px var(--dark), inset -4px -4px 8px var(--light);
+        --r-sm: 8px;
+        --mono: "Space Mono", ui-monospace, "JetBrains Mono", Menlo, Consolas, monospace;
+      }
+      [data-theme="dark"] {
+        --bg: #292d36; --fg: #e2e8f0; --muted: #94a3b8;
+        --primary: #2dd4bf; --light: #333845; --dark: #1d2027;
+      }
+      * { box-sizing: border-box; }
+      body { width: 280px; margin: 0; font: 13px/1.5 var(--mono); color: var(--fg); background: var(--bg); padding: 18px; }
+      h1 { font-size: 15px; font-weight: 700; margin: 0 0 12px; }
+      button { width: 100%; font-family: var(--mono); font-weight: 700; padding: 11px; border: 0; border-radius: var(--r-sm); cursor: pointer; font-size: 13px; background: var(--bg); color: var(--fg); box-shadow: var(--out); transition: box-shadow .15s, transform .05s; }
+      button:hover { transform: translateY(-1px); }
+      button:active { box-shadow: var(--in); transform: translateY(0); }
+      .primary { color: var(--primary); }
+      .ghost { margin-top: 10px; }
+      .status { color: var(--muted); margin: 12px 0; min-height: 16px; }
+      a { color: var(--primary); text-decoration: none; font-size: 12px; font-weight: 700; display: inline-block; margin-top: 12px; }
     </style>
   </head>
   <body>

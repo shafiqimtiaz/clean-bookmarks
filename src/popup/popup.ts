@@ -1,6 +1,11 @@
 import { getSettings } from '../core/storage';
 import { send } from '../core/messaging';
 
+// Honor the theme chosen in the main app (shared via localStorage), else OS.
+document.documentElement.dataset.theme =
+  localStorage.getItem('cb.theme') ??
+  (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+
 const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
 const status = $('status');
 const undoBtn = $<HTMLButtonElement>('undo');

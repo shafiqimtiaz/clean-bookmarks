@@ -16,6 +16,20 @@ const guard = (fn: () => Promise<void>) => () => {
 const run = new OrganizeRun(onState);
 let taxonomy: Taxonomy = [];
 
+// Light/dark theme — persisted in localStorage, default follows the OS.
+function applyTheme(theme: 'light' | 'dark') {
+  document.documentElement.dataset.theme = theme;
+  $('themeToggle').textContent = theme === 'dark' ? '☀️' : '🌙';
+  localStorage.setItem('cb.theme', theme);
+}
+applyTheme(
+  (localStorage.getItem('cb.theme') as 'light' | 'dark' | null) ??
+    (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light')
+);
+$('themeToggle').addEventListener('click', () =>
+  applyTheme(document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark')
+);
+
 async function boot() {
   const settings = await getSettings();
   if (!settings.consentAt || !settings.apiKey) {
@@ -90,6 +104,10 @@ $('applyBtn').addEventListener('click', guard(async () => {
 }));
 
 $('cancelBtn').addEventListener('click', () => location.reload());
+
+$('doneBtn').addEventListener('click', () => {
+  chrome.tabs.getCurrent((tab) => (tab?.id ? chrome.tabs.remove(tab.id) : window.close()));
+});
 
 $('undoBtn').addEventListener('click', guard(async () => {
   const res = await send<{ restored: number }>({ type: 'UNDO' });

@@ -2,6 +2,21 @@ import { getSettings, saveSettings } from '../core/storage';
 import { hasHostPermission, requestHostPermission } from '../core/permissions';
 import { PROVIDERS, CUSTOM_PROVIDER, providerForBaseUrl } from '../core/providers';
 
+// Light/dark theme — shared with the main app via localStorage, default OS.
+function applyTheme(theme: 'light' | 'dark') {
+  document.documentElement.dataset.theme = theme;
+  const btn = document.getElementById('themeToggle');
+  if (btn) btn.textContent = theme === 'dark' ? '☀️' : '🌙';
+  localStorage.setItem('cb.theme', theme);
+}
+applyTheme(
+  (localStorage.getItem('cb.theme') as 'light' | 'dark' | null) ??
+    (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light')
+);
+document.getElementById('themeToggle')?.addEventListener('click', () =>
+  applyTheme(document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark')
+);
+
 const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
 const provider = $<HTMLSelectElement>('provider');
 const baseUrl = $<HTMLInputElement>('baseUrl');
