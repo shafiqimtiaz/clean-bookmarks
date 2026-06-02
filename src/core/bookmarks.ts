@@ -45,8 +45,8 @@ export async function readScope(
       if (child.url) {
         flat.push({ idx: idx++, id: child.id, title: child.title || child.url, url: child.url, root: parentId });
       } else if (!child.title.startsWith(ORGANIZED_FOLDER_PREFIX)) {
-        folderNames.add(child.title); // top-level folder name -> seed category
-        collect(child, parentId); // flatten its contents; nested structure discarded
+        folderNames.add(child.title);
+        collect(child, parentId);
       }
     }
   }
@@ -88,7 +88,7 @@ export async function applyOrganization(
   let unsorted = 0;
 
   for (const rootId of [...new Set(bookmarks.map((b) => b.root))]) {
-    const createdIds = new Set<string>(); // folders we made this run
+    const createdIds = new Set<string>();
     const folderId = new Map<string, string>(); // "cat" or "cat/sub" -> id
     const ensureFolder = async (cat: string, sub?: string): Promise<string> => {
       const key = sub ? `${cat}/${sub}` : cat;
@@ -157,7 +157,6 @@ export async function restoreSnapshot(snapshot: Snapshot): Promise<void> {
     }
   }
 
-  // Recreate every saved leaf under its original folder path.
   const pathId = new Map<string, string>();
   const ensurePath = async (path: string[]): Promise<string> => {
     let parentId = path[0]!;
