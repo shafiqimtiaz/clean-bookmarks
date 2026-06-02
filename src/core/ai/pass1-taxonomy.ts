@@ -1,33 +1,38 @@
-import { generateText, Output, type LanguageModelUsage } from 'ai';
-import { taxonomySchema } from './schema';
-import { buildModel } from './provider';
+import { taxonomySchema, TAXONOMY_HINT } from './schema';
+import { generateJson, type Usage } from './json';
 import type { FlatBookmark, Settings, Taxonomy } from '../types';
 
-const SYSTEM = `You organize browser bookmarks. Given titles and URLs, propose 8-15 top-level categories that cleanly cover them. Each category may have a few sub-categories (max one level deep). Use the user's seed categories if provided.`;
+const SYSTEM = `You organize browser bookmarks. Given titles and URLs, propose 8-15 top-level categories that cleanly cover them. Each category may have a few sub-categories (max one level deep). Preserve the user's existing folder / seed categories (merge obvious duplicates like "Dev"/"Development").`;
 
-// Pass 1: read all bookmarks (compact title|host lines) and propose a taxonomy.
+// Pass 1: read all bookmarks and propose a taxonomy. `seeds` are the user's
+// existing folder names + configured seed categories — fed to the model to
+// merge/dedupe, then unioned back so none are ever dropped.
 export async function proposeTaxonomy(
   settings: Settings,
-  bookmarks: FlatBookmark[]
-): Promise<{ taxonomy: Taxonomy; usage: LanguageModelUsage }> {
-  const seed = settings.seedCategories.length
-    ? `\nSeed categories to respect: ${settings.seedCategories.join(', ')}.`
+  bookmarks: FlatBookmark[],
+  seeds: string[]
+): Promise<{ taxonomy: Taxonomy; usage: Usage }> {
+  const seed = seeds.length
+    ? `\nExisting folders / seed categories to preserve as categories: ${seeds.join(', ')}.`
     : '';
   const list = bookmarks.map((b) => `${b.title} | ${hostOf(b.url)}`).join('\n');
 
-  const { output, usage } = await generateText({
-    model: buildModel(settings),
-    output: Output.object({ schema: taxonomySchema }),
-    system: SYSTEM,
-    prompt: `${seed}\nBookmarks:\n${list}`,
-    temperature: 0,
-    maxRetries: 2,
-  });
+  const { data, usage } = await generateJson(
+    settings,
+    taxonomySchema,
+    SYSTEM,
+    `${seed}\nBookmarks:\n${list}`,
+    TAXONOMY_HINT
+  );
 
-  return {
-    taxonomy: output.categories.map((c) => ({ name: c.name, children: c.children })),
-    usage,
-  };
+  const taxonomy: Taxonomy = data.categories.map((c) => ({ name: c.name, children: c.children }));
+  // Guarantee every seed survives, even if the model dropped it.
+  const have = new Set(taxonomy.map((c) => c.name.toLowerCase()));
+  for (const s of seeds) {
+    if (!have.has(s.toLowerCase())) taxonomy.push({ name: s, children: [] });
+  }
+
+  return { taxonomy, usage };
 }
 
 function hostOf(url: string): string {

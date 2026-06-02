@@ -7,6 +7,12 @@ import type { Assignment, RunState, Taxonomy } from '../core/types';
 const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
 const show = (id: string, on = true) => ($(id).hidden = !on);
 
+// Any unhandled error (bad API key, network, parse failure) must surface on
+// the error screen — never leave the UI frozen on a hidden spinner.
+const guard = (fn: () => Promise<void>) => () => {
+  fn().catch((e: unknown) => fail(e instanceof Error ? e.message : String(e)));
+};
+
 const run = new OrganizeRun(onState);
 let taxonomy: Taxonomy = [];
 
@@ -31,7 +37,7 @@ async function showEstimate() {
   show('estimate');
 }
 
-$('consentBtn').addEventListener('click', async () => {
+$('consentBtn').addEventListener('click', guard(async () => {
   const settings = await getSettings();
   if (!settings.apiKey) {
     chrome.runtime.openOptionsPage();
@@ -39,18 +45,18 @@ $('consentBtn').addEventListener('click', async () => {
   }
   await saveSettings({ consentAt: Date.now() });
   await showEstimate();
-});
+}));
 
 $('openSettings').addEventListener('click', () => chrome.runtime.openOptionsPage());
 
-$('runBtn').addEventListener('click', async () => {
+$('runBtn').addEventListener('click', guard(async () => {
   show('estimate', false);
   show('progress');
   taxonomy = await run.start();
   renderChips();
   show('progress', false);
   show('review');
-});
+}));
 
 $('addCatBtn').addEventListener('click', () => {
   const input = $<HTMLInputElement>('addCat');
@@ -62,16 +68,16 @@ $('addCatBtn').addEventListener('click', () => {
   }
 });
 
-$('assignBtn').addEventListener('click', async () => {
+$('assignBtn').addEventListener('click', guard(async () => {
   show('review', false);
   show('progress');
   const assignments = await run.assign(taxonomy);
   show('progress', false);
   renderPreview(assignments);
   show('preview');
-});
+}));
 
-$('applyBtn').addEventListener('click', async () => {
+$('applyBtn').addEventListener('click', guard(async () => {
   show('preview', false);
   show('progress');
   $('progressTitle').textContent = 'Applying…';
@@ -81,17 +87,17 @@ $('applyBtn').addEventListener('click', async () => {
   $('resultTitle').textContent = 'Done';
   $('resultText').textContent = `Moved ${res.data.movedCount} bookmarks (${res.data.unsortedCount} unsorted).`;
   show('result');
-});
+}));
 
 $('cancelBtn').addEventListener('click', () => location.reload());
 
-$('undoBtn').addEventListener('click', async () => {
+$('undoBtn').addEventListener('click', guard(async () => {
   const res = await send<{ restored: number }>({ type: 'UNDO' });
   $('resultText').textContent = res.ok
     ? `Restored ${res.data.restored} bookmarks.`
     : `Error: ${res.error}`;
   ($('undoBtn') as HTMLButtonElement).hidden = res.ok;
-});
+}));
 
 function renderChips() {
   const wrap = $('chips');
@@ -165,4 +171,4 @@ function fail(error: string) {
   show('result');
 }
 
-void boot();
+guard(boot)();

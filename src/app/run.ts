@@ -4,10 +4,10 @@ import { proposeTaxonomy } from '../core/ai/pass1-taxonomy';
 import { assignBatch } from '../core/ai/pass2-assign';
 import { getSettings } from '../core/storage';
 import { send, type ReadScopeResult } from '../core/messaging';
-import type { LanguageModelUsage } from 'ai';
+import type { Usage } from '../core/ai/json';
 import type { Assignment, FlatBookmark, RunState, Taxonomy } from '../core/types';
 
-const tokens = (u: LanguageModelUsage) => (u.inputTokens ?? 0) + (u.outputTokens ?? 0);
+const tokens = (u: Usage) => u.inputTokens + u.outputTokens;
 
 // The long-running organize job lives here, in the full-page tab context,
 // so the MV3 service worker's ~30s idle kill never interrupts it. The SW is
@@ -43,7 +43,8 @@ export class OrganizeRun {
     this.set({ phase: 'pass1', total: this.bookmarks.length });
 
     const settings = await getSettings();
-    const { taxonomy, usage } = await proposeTaxonomy(settings, this.bookmarks);
+    const seeds = [...new Set([...settings.seedCategories, ...read.data.folderNames])];
+    const { taxonomy, usage } = await proposeTaxonomy(settings, this.bookmarks, seeds);
     this.taxonomy = taxonomy;
     this.set({
       phase: 'review',

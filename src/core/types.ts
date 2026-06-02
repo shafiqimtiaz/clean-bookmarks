@@ -6,6 +6,7 @@ export interface FlatBookmark {
   id: string;
   title: string;
   url: string;
+  root: string; // origin scope root id ('1' bar, '2' other) — reorganized in place
 }
 
 // A node in the proposed organized tree. Categories may nest one level

@@ -11,6 +11,7 @@ export type Message =
 export interface ReadScopeResult {
   bookmarks: FlatBookmark[];
   scopeParentIds: string[];
+  folderNames: string[]; // user's top-level folder names -> seed categories
 }
 
 export interface ApplyResult {

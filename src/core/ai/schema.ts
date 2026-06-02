@@ -21,3 +21,12 @@ export const assignmentsSchema = z.object({
     })
   ),
 });
+
+// Plain-text shape hints injected into the prompt. Reasoning models (e.g.
+// MiniMax-M2.7) ignore json_object mode and emit prose, so we instruct the
+// exact JSON shape and parse tolerantly instead of relying on the provider.
+export const TAXONOMY_HINT =
+  '{ "categories": [ { "name": "string", "children": ["string"] } ] }';
+
+export const ASSIGNMENTS_HINT =
+  '{ "assignments": [ { "idx": 0, "cat": "string", "sub": "string or null" } ] }';

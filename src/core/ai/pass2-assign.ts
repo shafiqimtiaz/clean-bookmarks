@@ -1,6 +1,5 @@
-import { generateText, Output, type LanguageModelUsage } from 'ai';
-import { assignmentsSchema } from './schema';
-import { buildModel } from './provider';
+import { assignmentsSchema, ASSIGNMENTS_HINT } from './schema';
+import { generateJson, type Usage } from './json';
 import type { Assignment, FlatBookmark, Settings, Taxonomy } from '../types';
 
 function system(taxonomy: Taxonomy): string {
@@ -11,26 +10,25 @@ function system(taxonomy: Taxonomy): string {
 }
 
 // Assign a single batch. Missing idxs are handled by the caller (-> Unsorted).
-// Throws only after the SDK's built-in retries are exhausted.
+// Throws only after retries are exhausted.
 export async function assignBatch(
   settings: Settings,
   taxonomy: Taxonomy,
   batch: FlatBookmark[]
-): Promise<{ assignments: Assignment[]; usage: LanguageModelUsage }> {
+): Promise<{ assignments: Assignment[]; usage: Usage }> {
   const list = batch.map((b) => `${b.idx}: ${b.title} | ${b.url}`).join('\n');
 
-  const { output, usage } = await generateText({
-    model: buildModel(settings),
-    output: Output.object({ schema: assignmentsSchema }),
-    system: system(taxonomy),
-    prompt: `Bookmarks:\n${list}`,
-    temperature: 0,
-    maxRetries: 2,
-  });
+  const { data, usage } = await generateJson(
+    settings,
+    assignmentsSchema,
+    system(taxonomy),
+    `Bookmarks:\n${list}`,
+    ASSIGNMENTS_HINT
+  );
 
   const known = new Set(batch.map((b) => b.idx));
   return {
-    assignments: output.assignments
+    assignments: data.assignments
       .filter((a) => known.has(a.idx))
       .map((a) => ({ idx: a.idx, cat: a.cat, sub: a.sub ?? undefined })),
     usage,
