@@ -30,6 +30,8 @@ $('themeToggle').addEventListener('click', () =>
   applyTheme(document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark')
 );
 
+$('settingsBtn').addEventListener('click', () => chrome.runtime.openOptionsPage());
+
 async function boot() {
   const settings = await getSettings();
   if (!settings.consentAt || !settings.apiKey) {

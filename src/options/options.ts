@@ -17,6 +17,17 @@ document.getElementById('themeToggle')?.addEventListener('click', () =>
   applyTheme(document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark')
 );
 
+document.getElementById('backBtn')?.addEventListener('click', async () => {
+  const appUrl = chrome.runtime.getURL('app.html');
+  const tabs = await chrome.tabs.query({ url: appUrl });
+  if (tabs.length && tabs[0]?.id) {
+    await chrome.tabs.update(tabs[0].id, { active: true });
+  } else {
+    await chrome.tabs.create({ url: appUrl });
+  }
+  window.close();
+});
+
 const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
 const provider = $<HTMLSelectElement>('provider');
 const baseUrl = $<HTMLInputElement>('baseUrl');
@@ -24,7 +35,6 @@ const editBaseUrl = $<HTMLButtonElement>('editBaseUrl');
 const apiKey = $<HTMLInputElement>('apiKey');
 const modelSelect = $<HTMLSelectElement>('modelSelect');
 const modelCustom = $<HTMLInputElement>('modelCustom');
-const seed = $<HTMLInputElement>('seed');
 
 const ALL = [...PROVIDERS, CUSTOM_PROVIDER];
 const CUSTOM_MODEL = '__custom__';
@@ -84,7 +94,6 @@ async function init() {
   provider.value = p.id;
   baseUrl.value = s.baseUrl;
   apiKey.value = keys[p.id] ?? '';
-  seed.value = s.seedCategories.join(', ');
   fillModels(p.id, s.model);
   lockBaseUrl(p.id !== 'custom');
 }
@@ -130,7 +139,6 @@ $('save').addEventListener('click', async () => {
     apiKey: key, // active key for the selected provider
     apiKeys: keys,
     model: chosenModel() || 'gpt-4o-mini',
-    seedCategories: seed.value.split(',').map((s) => s.trim()).filter(Boolean),
   });
   const saved = $('saved');
   saved.hidden = false;

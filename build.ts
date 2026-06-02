@@ -12,7 +12,6 @@ await mkdir(join(OUT, 'icons'), { recursive: true });
 const result = await Bun.build({
   entrypoints: [
     'src/background/service-worker.ts',
-    'src/popup/popup.ts',
     'src/options/options.ts',
     'src/app/app.ts',
   ],
@@ -29,7 +28,7 @@ if (!result.success) {
 }
 
 // HTML pages (kept next to their bundled JS by basename).
-for (const html of ['src/popup/popup.html', 'src/options/options.html', 'src/app/app.html']) {
+for (const html of ['src/options/options.html', 'src/app/app.html']) {
   await cp(html, join(OUT, html.split('/').pop()!));
 }
 

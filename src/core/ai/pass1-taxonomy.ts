@@ -2,7 +2,7 @@ import { taxonomySchema, TAXONOMY_HINT } from './schema';
 import { generateJson, type Usage } from './json';
 import type { FlatBookmark, Settings, Taxonomy } from '../types';
 
-const SYSTEM = `Group bookmarks into 8-15 categories. Single word per name. Abbreviate. Merge similar. No articles. Tight.
+const SYSTEM = `Group bookmarks into categories. Single word per name. Abbreviate. Merge similar. No articles. Tight. No cap — produce as many as needed.
 Example: "react-hooks" + "react-state" + "react-router" → "react"`;
 
 // Pass 1: read all bookmarks and propose a taxonomy.
