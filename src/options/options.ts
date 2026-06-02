@@ -29,6 +29,10 @@ const seed = $<HTMLInputElement>('seed');
 const ALL = [...PROVIDERS, CUSTOM_PROVIDER];
 const CUSTOM_MODEL = '__custom__';
 
+// Remembered key per provider id; the input always reflects the selected one.
+let keys: Record<string, string> = {};
+let currentProvider = 'openai';
+
 function fillProviders() {
   provider.innerHTML = '';
   for (const p of ALL) {
@@ -73,9 +77,13 @@ async function init() {
   fillProviders();
   const s = await getSettings();
   const p = providerForBaseUrl(s.baseUrl);
+  keys = { ...s.apiKeys };
+  // Migrate a pre-existing single key onto the active provider.
+  if (s.apiKey && !keys[p.id]) keys[p.id] = s.apiKey;
+  currentProvider = p.id;
   provider.value = p.id;
   baseUrl.value = s.baseUrl;
-  apiKey.value = s.apiKey;
+  apiKey.value = keys[p.id] ?? '';
   seed.value = s.seedCategories.join(', ');
   fillModels(p.id, s.model);
   lockBaseUrl(p.id !== 'custom');
@@ -94,7 +102,11 @@ editBaseUrl.addEventListener('click', () => {
 });
 
 provider.addEventListener('change', () => {
+  // Stash the key typed for the old provider, then show the new one's key.
+  keys[currentProvider] = apiKey.value.trim();
   const preset = ALL.find((p) => p.id === provider.value) ?? CUSTOM_PROVIDER;
+  currentProvider = preset.id;
+  apiKey.value = keys[preset.id] ?? '';
   if (preset.id !== 'custom') baseUrl.value = preset.baseUrl;
   fillModels(preset.id, preset.models[0]);
   lockBaseUrl(preset.id !== 'custom');
@@ -111,9 +123,12 @@ $('save').addEventListener('click', async () => {
       return;
     }
   }
+  const key = apiKey.value.trim();
+  keys[currentProvider] = key;
   await saveSettings({
     baseUrl: url,
-    apiKey: apiKey.value.trim(),
+    apiKey: key, // active key for the selected provider
+    apiKeys: keys,
     model: chosenModel() || 'gpt-4o-mini',
     seedCategories: seed.value.split(',').map((s) => s.trim()).filter(Boolean),
   });

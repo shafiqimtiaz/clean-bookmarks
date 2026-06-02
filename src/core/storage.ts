@@ -3,6 +3,7 @@ import { STORAGE_KEYS, type Settings, type Snapshot } from './types';
 const DEFAULT_SETTINGS: Settings = {
   baseUrl: 'https://api.openai.com/v1',
   apiKey: '',
+  apiKeys: {},
   model: 'gpt-4o-mini',
   seedCategories: [],
   consentAt: null,

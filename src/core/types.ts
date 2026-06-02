@@ -28,7 +28,8 @@ export interface Assignment {
 
 export interface Settings {
   baseUrl: string; // e.g. https://api.openai.com/v1
-  apiKey: string;
+  apiKey: string; // active key (the one matching the selected provider)
+  apiKeys: Record<string, string>; // remembered key per provider id
   model: string; // e.g. gpt-4o-mini
   seedCategories: string[]; // optional user-seeded categories (pass 1 respects)
   consentAt: number | null; // epoch ms of first-run consent, null = not given
