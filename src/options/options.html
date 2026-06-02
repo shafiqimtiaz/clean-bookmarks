@@ -1,0 +1,52 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <style>
+      body { max-width: 520px; margin: 40px auto; font: 14px system-ui, sans-serif; color: #1e293b; padding: 0 16px; }
+      h1 { font-size: 18px; }
+      label { display: block; margin: 16px 0 4px; font-weight: 600; }
+      input, select { width: 100%; padding: 8px; border: 1px solid #cbd5e1; border-radius: 6px; box-sizing: border-box; background: #fff; }
+      input:disabled { background: #f1f5f9; color: #64748b; }
+      .hint { color: #64748b; font-size: 12px; margin-top: 4px; }
+      button { margin-top: 20px; padding: 9px 16px; border: 0; border-radius: 6px; background: #2563eb; color: #fff; cursor: pointer; }
+      .saved { color: #16a34a; margin-left: 10px; }
+      .row { display: flex; gap: 8px; align-items: center; }
+      .icon-btn { margin-top: 0; padding: 8px 10px; background: #f1f5f9; color: #334155; flex-shrink: 0; }
+      [hidden] { display: none !important; }
+    </style>
+  </head>
+  <body>
+    <h1>Clean Bookmarks — Settings</h1>
+    <p class="hint">
+      Bring your own key. Your bookmark titles and URLs are sent only to the endpoint
+      below. The key is stored locally in your browser and never synced.
+    </p>
+
+    <label for="provider">Provider</label>
+    <select id="provider"></select>
+
+    <label for="baseUrl">API base URL</label>
+    <div class="row">
+      <input id="baseUrl" placeholder="https://api.openai.com/v1" disabled />
+      <button id="editBaseUrl" class="icon-btn" type="button" title="Edit base URL">✏️</button>
+    </div>
+    <div class="hint">Auto-filled by provider. Click the pencil to edit for a region variant or custom endpoint.</div>
+
+    <label for="apiKey">API key</label>
+    <input id="apiKey" type="password" placeholder="sk-…" />
+
+    <label for="model">Model</label>
+    <select id="modelSelect"></select>
+    <input id="modelCustom" placeholder="model name" hidden />
+
+    <label for="seed">Seed categories (optional, comma-separated)</label>
+    <input id="seed" placeholder="Work, Reading, Tools" />
+
+    <div>
+      <button id="save">Save</button>
+      <span class="saved" id="saved" hidden>Saved ✓</span>
+    </div>
+    <script type="module" src="./options.js"></script>
+  </body>
+</html>

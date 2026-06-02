@@ -1,0 +1,23 @@
+{
+  "name": "clean-bookmarks",
+  "module": "index.ts",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "build": "bun build.ts",
+    "typecheck": "bunx tsc --noEmit",
+    "test": "bun test"
+  },
+  "devDependencies": {
+    "@types/bun": "latest",
+    "@types/chrome": "latest"
+  },
+  "peerDependencies": {
+    "typescript": "^5"
+  },
+  "dependencies": {
+    "@ai-sdk/openai-compatible": "^2.0.48",
+    "ai": "^6.0.195",
+    "zod": "^4.4.3"
+  }
+}

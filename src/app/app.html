@@ -1,0 +1,84 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>Clean Bookmarks</title>
+    <style>
+      body { max-width: 760px; margin: 32px auto; font: 14px system-ui, sans-serif; color: #1e293b; padding: 0 20px; }
+      h1 { font-size: 20px; }
+      section { margin: 20px 0; padding: 16px; border: 1px solid #e2e8f0; border-radius: 8px; }
+      button { padding: 9px 16px; border: 0; border-radius: 6px; cursor: pointer; font-size: 14px; }
+      .primary { background: #2563eb; color: #fff; }
+      .ghost { background: #f1f5f9; color: #334155; }
+      .danger { background: #fee2e2; color: #b91c1c; }
+      [hidden] { display: none !important; }
+      .chip { display: inline-flex; align-items: center; gap: 6px; background: #eff6ff; color: #1d4ed8; border-radius: 14px; padding: 4px 10px; margin: 3px; font-size: 13px; }
+      .chip button { background: none; color: #1d4ed8; padding: 0 2px; font-size: 14px; }
+      .bar { height: 8px; background: #e2e8f0; border-radius: 4px; overflow: hidden; }
+      .bar > div { height: 100%; background: #2563eb; width: 0; transition: width .2s; }
+      .muted { color: #64748b; font-size: 13px; }
+      ul.tree { list-style: none; padding-left: 16px; }
+      ul.tree > li { margin: 2px 0; }
+      .count { color: #64748b; font-size: 12px; }
+      input.add { padding: 6px; border: 1px solid #cbd5e1; border-radius: 6px; }
+    </style>
+  </head>
+  <body>
+    <h1>Clean Bookmarks</h1>
+
+    <section id="consent" hidden>
+      <h2>Before you start</h2>
+      <p>
+        This organizes the bookmarks in your <b>Other Bookmarks</b> and loose items on your
+        <b>Bookmarks Bar</b>. Their <b>titles and URLs</b> will be sent to the AI endpoint you
+        configured. <b>Nothing else</b> leaves your device. Your bookmarks are moved into a new
+        dated folder, and a one-click <b>Undo</b> is always available.
+      </p>
+      <button class="primary" id="consentBtn">I understand — continue</button>
+      <button class="ghost" id="openSettings">Settings</button>
+    </section>
+
+    <section id="estimate" hidden>
+      <h2>Estimate</h2>
+      <p id="estimateText" class="muted"></p>
+      <button class="primary" id="runBtn">Analyze bookmarks</button>
+    </section>
+
+    <section id="progress" hidden>
+      <h2 id="progressTitle">Working…</h2>
+      <div class="bar"><div id="progressBar"></div></div>
+      <p id="progressText" class="muted"></p>
+    </section>
+
+    <section id="review" hidden>
+      <h2>Review categories</h2>
+      <p class="muted">Rename, remove, or add categories. These are what every bookmark gets sorted into.</p>
+      <div id="chips"></div>
+      <div style="margin-top:10px">
+        <input class="add" id="addCat" placeholder="Add a category" />
+        <button class="ghost" id="addCatBtn">Add</button>
+      </div>
+      <p style="margin-top:16px">
+        <button class="primary" id="assignBtn">Sort bookmarks into these</button>
+      </p>
+    </section>
+
+    <section id="preview" hidden>
+      <h2>Preview</h2>
+      <p id="previewSummary" class="muted"></p>
+      <div id="tree"></div>
+      <p style="margin-top:16px">
+        <button class="primary" id="applyBtn">Apply</button>
+        <button class="ghost" id="cancelBtn">Cancel</button>
+      </p>
+    </section>
+
+    <section id="result" hidden>
+      <h2 id="resultTitle"></h2>
+      <p id="resultText" class="muted"></p>
+      <button class="danger" id="undoBtn">Undo</button>
+    </section>
+
+    <script type="module" src="./app.js"></script>
+  </body>
+</html>

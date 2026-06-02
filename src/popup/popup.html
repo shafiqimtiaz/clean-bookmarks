@@ -1,0 +1,23 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <style>
+      body { width: 280px; margin: 0; font: 13px system-ui, sans-serif; padding: 14px; }
+      h1 { font-size: 14px; margin: 0 0 10px; }
+      button { width: 100%; padding: 9px; border: 0; border-radius: 6px; cursor: pointer; font-size: 13px; }
+      .primary { background: #2563eb; color: #fff; }
+      .ghost { background: #f1f5f9; color: #334155; margin-top: 8px; }
+      .status { color: #64748b; margin: 10px 0; min-height: 16px; }
+      a { color: #2563eb; text-decoration: none; font-size: 12px; display: inline-block; margin-top: 10px; }
+    </style>
+  </head>
+  <body>
+    <h1>Clean Bookmarks</h1>
+    <div class="status" id="status">Ready.</div>
+    <button class="primary" id="organize">Organize bookmarks</button>
+    <button class="ghost" id="undo" hidden>Undo last organize</button>
+    <a id="settings" href="#">Settings</a>
+    <script type="module" src="./popup.js"></script>
+  </body>
+</html>
