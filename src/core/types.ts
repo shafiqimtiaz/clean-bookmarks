@@ -24,6 +24,7 @@ export interface Assignment {
   idx: number;
   cat: string;
   sub?: string;
+  title: string;
 }
 
 export interface Settings {

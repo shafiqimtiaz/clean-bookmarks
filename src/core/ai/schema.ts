@@ -18,6 +18,7 @@ export const assignmentsSchema = z.object({
       idx: z.number().int(),
       cat: z.string(),
       sub: z.string().nullable(),
+      title: z.string(),
     }),
   ),
 });
@@ -29,4 +30,4 @@ export const TAXONOMY_HINT =
   '{ "categories": [ { "name": "string", "children": ["string"] } ] }';
 
 export const ASSIGNMENTS_HINT =
-  '{ "assignments": [ { "idx": 0, "cat": "string", "sub": "string or null" } ] }';
+  '{ "assignments": [ { "idx": 0, "cat": "string", "sub": "string or null", "title": "Clean, precise bookmark name without ambiguity" } ] }';
