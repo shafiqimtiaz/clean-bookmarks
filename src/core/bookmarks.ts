@@ -147,9 +147,8 @@ export async function applyOrganization(
   let unsorted = 0;
 
   for (const rootId of [...new Set(bookmarks.map((b) => b.root))]) {
-    // Pre-count how many bookmarks share each cat/sub combo.
     const subCount = new Map<string, number>();
-    for (const bm of bookmarks) {
+    for (const bm of bookmarks.filter((b) => b.root === rootId)) {
       const a = byIdx.get(bm.idx);
       if (a?.sub) {
         const key = `${a.cat}/${a.sub}`;
@@ -192,9 +191,11 @@ export async function applyOrganization(
       }
 
       const a = byIdx.get(bm.idx);
-      // Collapse sub-folder when only 1 bookmark maps to it.
-      if (a?.sub && (subCount.get(`${a.cat}/${a.sub}`) ?? 0) <= 1) {
-        a.sub = undefined;
+      if (a) {
+        // Collapse sub-folder when only 1 bookmark maps to it.
+        if (a.sub && (subCount.get(`${a.cat}/${a.sub}`) ?? 0) <= 1) {
+          a.sub = undefined;
+        }
       }
       const dest = a
         ? await ensureFolder(a.cat, a.sub)
