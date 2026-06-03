@@ -118,6 +118,16 @@ export async function applyOrganization(
   let unsorted = 0;
 
   for (const rootId of [...new Set(bookmarks.map((b) => b.root))]) {
+    // Pre-count how many bookmarks share each cat/sub combo.
+    const subCount = new Map<string, number>();
+    for (const bm of bookmarks) {
+      const a = byIdx.get(bm.idx);
+      if (a?.sub) {
+        const key = `${a.cat}/${a.sub}`;
+        subCount.set(key, (subCount.get(key) ?? 0) + 1);
+      }
+    }
+
     const createdIds = new Set<string>();
     const folderId = new Map<string, string>(); // "cat" or "cat/sub" -> id
     const ensureFolder = async (cat: string, sub?: string): Promise<string> => {
@@ -146,6 +156,10 @@ export async function applyOrganization(
       }
 
       const a = byIdx.get(bm.idx);
+      // Collapse sub-folder when only 1 bookmark maps to it.
+      if (a?.sub && (subCount.get(`${a.cat}/${a.sub}`) ?? 0) <= 1) {
+        a.sub = undefined;
+      }
       const dest = a ? await ensureFolder(a.cat, a.sub) : await ensureFolder(UNSORTED_FOLDER);
       try {
         await chrome.bookmarks.move(bm.id, { parentId: dest });

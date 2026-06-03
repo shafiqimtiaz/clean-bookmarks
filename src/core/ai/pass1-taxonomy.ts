@@ -2,7 +2,8 @@ import { taxonomySchema, TAXONOMY_HINT } from './schema';
 import { generateJson, type Usage } from './json';
 import type { FlatBookmark, Settings, Taxonomy } from '../types';
 
-const SYSTEM = `Group bookmarks into categories. Single word per name. Abbreviate. Merge similar. No articles. Tight. No cap — produce as many as needed.
+const SYSTEM = `Group bookmarks into categories. Single word per name. Abbreviate. Merge similar. No articles. Tight. No cap.
+Children (sub-categories) are OPTIONAL — only add when 5+ bookmarks clearly share a distinct sub-theme. Never use bookmark names as children. Most categories should have NO children.
 Example: "react-hooks" + "react-state" + "react-router" → "react"`;
 
 export const DEFAULT_TAXONOMY_PROMPT = SYSTEM;
@@ -29,6 +30,20 @@ export async function proposeTaxonomy(
   );
 
   const taxonomy: Taxonomy = data.categories.map((c) => ({ name: c.name, children: c.children }));
+
+  // Strip children that look like individual bookmark names, not sub-categories.
+  const titleSet = new Set(bookmarks.map((b) => b.title.toLowerCase()));
+  const hostSet = new Set(bookmarks.map((b) => hostOf(b.url).toLowerCase()).filter(Boolean));
+  for (const cat of taxonomy) {
+    cat.children = (cat.children ?? []).filter((ch) => {
+      const lc = ch.toLowerCase();
+      if (titleSet.has(lc)) return false; // matches exact bookmark title
+      if (hostSet.has(lc)) return false; // matches exact URL host
+      if (ch.length > 30) return false; // too long, probably a title
+      if (/[^a-zA-Z0-9 &_\-.]/.test(ch)) return false; // special chars (™, !, commas etc)
+      return true;
+    });
+  }
   // Only guarantee explicitly configured seeds survive — folder hints are advisory.
   const have = new Set(taxonomy.map((c) => c.name.toLowerCase()));
   for (const s of configSeeds) {

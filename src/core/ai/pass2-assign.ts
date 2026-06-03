@@ -6,7 +6,7 @@ function system(taxonomy: Taxonomy): string {
   const cats = taxonomy
     .map((c) => (c.children?.length ? `${c.name} > [${c.children.join(', ')}]` : c.name))
     .join('\n');
-  return `Assign each bookmark to exactly one category from this fixed taxonomy. Use a sub-category when one fits, else null. Never invent categories. Return one entry per bookmark idx.\n\nTaxonomy:\n${cats}`;
+  return `Assign each bookmark to exactly one category. Only use sub when 2+ bookmarks share it — otherwise leave sub null. A folder with 1 item is noise. Never invent categories. Return one entry per bookmark idx.\n\nTaxonomy:\n${cats}`;
 }
 
 // Assign a single batch. Missing idxs are handled by the caller (-> Unsorted).
