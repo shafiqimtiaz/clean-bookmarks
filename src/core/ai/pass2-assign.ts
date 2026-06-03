@@ -8,7 +8,7 @@ function system(taxonomy: Taxonomy): string {
       c.children?.length ? `${c.name} > [${c.children.join(", ")}]` : c.name,
     )
     .join("\n");
-  return `Assign each bookmark to exactly one category. Only use sub when 2+ bookmarks share it — otherwise leave sub null. A folder with 1 item is noise. Never invent categories. Return one entry per bookmark idx.\n\nTaxonomy:\n${cats}`;
+  return `Assign each bookmark to exactly one category. Only use sub when 2+ bookmarks share it — otherwise leave sub null. A folder with 1 item is noise. Never invent categories. Also, fix all bookmark names (title) - there should be NO incorrect, blank, or ambiguous bookmark names. Return one entry per bookmark idx.\n\nTaxonomy:\n${cats}`;
 }
 
 // Assign a single batch. Missing idxs are handled by the caller (-> Unsorted).
@@ -32,7 +32,12 @@ export async function assignBatch(
   return {
     assignments: data.assignments
       .filter((a) => known.has(a.idx))
-      .map((a) => ({ idx: a.idx, cat: a.cat, sub: a.sub ?? undefined })),
+      .map((a) => ({
+        idx: a.idx,
+        cat: a.cat,
+        sub: a.sub ?? undefined,
+        title: a.title,
+      })),
     usage,
   };
 }

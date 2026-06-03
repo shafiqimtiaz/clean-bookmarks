@@ -182,7 +182,8 @@ export async function applyOrganization(
     };
 
     for (const bm of bookmarks.filter((b) => b.root === rootId)) {
-      const title = displayTitle(bm.title, bm.url);
+      const a = byIdx.get(bm.idx);
+      const title = a?.title || displayTitle(bm.title, bm.url);
       try {
         if (title !== bm.title) await chrome.bookmarks.update(bm.id, { title });
       } catch (e) {
@@ -190,7 +191,6 @@ export async function applyOrganization(
         continue;
       }
 
-      const a = byIdx.get(bm.idx);
       if (a) {
         // Collapse sub-folder when only 1 bookmark maps to it.
         if (a.sub && (subCount.get(`${a.cat}/${a.sub}`) ?? 0) <= 1) {
