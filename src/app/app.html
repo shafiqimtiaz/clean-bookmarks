@@ -3,57 +3,12 @@
   <head>
     <meta charset="utf-8" />
     <title>Clean Bookmarks</title>
-    <style>
-      /* Brutalism — hard edges, raw type, no shadows, anti-design. */
-      @import url('https://fonts.googleapis.com/css2?family=Darker+Grotesque:wght@400;600;700;800;900&family=JetBrains+Mono:wght@400;700&display=swap');
-      :root {
-        --bg: #FFFFFF; --fg: #111827; --muted: #6B7280;
-        --primary: #DD614C; --primary-fg: #FFFFFF;
-        --danger: #DC2626;
-        --border: #111827;
-        --mono: "JetBrains Mono", ui-monospace, Menlo, Consolas, monospace;
-        --sans: "Darker Grotesque", ui-sans-serif, sans-serif;
-      }
-      [data-theme="dark"] {
-        --bg: #1A1A1A; --fg: #E5E5E5; --muted: #9CA3AF;
-        --primary: #FF725E; --primary-fg: #111827;
-        --danger: #EF4444;
-        --border: #E5E5E5;
-      }
-      * { box-sizing: border-box; }
-      body { max-width: 760px; margin: 0 auto; font: 18px/1.4 var(--sans); font-weight: 500; color: var(--fg); background: var(--bg); padding: 40px 24px; }
-      h1 { font: 900 2.5rem/1 var(--sans); letter-spacing: -1px; }
-      h2 { font: 700 1.2rem/1 var(--sans); }
-      .head { display: flex; align-items: center; justify-content: space-between; border-bottom: 4px solid var(--border); padding-bottom: 12px; }
-      section { margin: 24px 0; padding: 24px; border: 3px solid var(--border); }
-      button { font: 700 14px var(--mono); padding: 14px 24px; border: 3px solid var(--border); cursor: pointer; background: var(--bg); color: var(--fg); transition: transform .05s; }
-      .btn-row { display: flex; gap: 12px; margin-top: 16px; }
-      button:hover { transform: translate(-2px, -2px); box-shadow: 4px 4px 0 var(--border); }
-      button:active { transform: translate(2px, 2px); box-shadow: none; }
-      .primary { background: var(--primary); color: var(--primary-fg); border-color: var(--primary); }
-      .primary:hover { box-shadow: 4px 4px 0 #000; }
-      .danger { color: var(--danger); border-color: var(--danger); }
-      #settingsBtn { padding: 10px 12px; font-size: 18px; border: 3px solid var(--border); }
-      #themeToggle { padding: 10px 12px; font-size: 18px; border: 3px solid var(--border); }
-      [hidden] { display: none !important; }
-      .chip { display: inline-flex; align-items: center; gap: 6px; border: 3px solid var(--border); padding: 8px 16px; margin: 4px; font: 400 15px var(--mono); background: var(--bg); }
-      .chip [contenteditable] { outline: none; background: none; border: none; font: inherit; }
-      .chip button { background: none; border: none; color: var(--fg); padding: 0 4px; font-size: 16px; box-shadow: none; }
-      .chip button:hover { transform: none; box-shadow: none; }
-      .bar { height: 16px; border: 3px solid var(--border); padding: 2px; }
-      .bar > div { height: 100%; background: var(--primary); width: 0; transition: width .2s; }
-      .muted { color: var(--muted); font-size: 15px; }
-      ul.tree { list-style: none; padding-left: 0; }
-      ul.tree > li { margin: 6px 0; padding: 12px 18px; border: 2px solid var(--border); font-family: var(--mono); font-size: 13px; }
-      .count { color: var(--muted); font-size: 12px; }
-      input.add { font: 400 15px var(--mono); padding: 14px 16px; border: 3px solid var(--border); background: var(--bg); color: var(--fg); }
-      input.add:focus { outline: none; border-color: var(--primary); }
-    </style>
+    <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
     <div class="head">
       <h1>Clean Bookmarks</h1>
-      <div style="display:flex;gap:10px">
+      <div style="display: flex; gap: 10px">
         <button id="settingsBtn" title="Settings">⚙️</button>
         <button id="themeToggle" title="Toggle light/dark">🌙</button>
       </div>
@@ -62,10 +17,11 @@
     <section id="consent" hidden>
       <h2>Before you start</h2>
       <p>
-        This organizes the bookmarks in your <b>Other Bookmarks</b> and loose items on your
-        <b>Bookmarks Bar</b>. Their <b>titles and URLs</b> will be sent to the AI endpoint you
-        configured. <b>Nothing else</b> leaves your device. Your bookmarks are moved into a new
-        dated folder, and a one-click <b>Undo</b> is always available.
+        This organizes the bookmarks in your <b>Other Bookmarks</b> and loose
+        items on your <b>Bookmarks Bar</b>. Their <b>titles and URLs</b> will be
+        sent to the AI endpoint you configured. <b>Nothing else</b> leaves your
+        device. Your bookmarks are moved into a new dated folder, and a
+        one-click <b>Undo</b> is always available.
       </p>
       <button class="primary" id="consentBtn">I understand — continue</button>
       <button class="ghost" id="openSettings">Settings</button>
@@ -85,14 +41,19 @@
 
     <section id="review" hidden>
       <h2>Review categories</h2>
-      <p class="muted">Rename, remove, or add categories. These are what every bookmark gets sorted into.</p>
+      <p class="muted">
+        Rename, remove, or add categories. These are what every bookmark gets
+        sorted into.
+      </p>
       <div id="chips"></div>
       <div class="btn-row">
         <input class="add" id="addCat" placeholder="Add a category" />
         <button class="ghost" id="addCatBtn">Add</button>
       </div>
       <p class="btn-row">
-        <button class="primary" id="assignBtn">Sort bookmarks into these</button>
+        <button class="primary" id="assignBtn">
+          Sort bookmarks into these
+        </button>
       </p>
     </section>
 
@@ -114,6 +75,72 @@
         <button class="primary" id="doneBtn">Done</button>
       </div>
     </section>
+
+    <!-- Settings modal (shown inline via ⚙️ button) -->
+    <div id="settingsPanel" hidden>
+      <div class="settings-backdrop">
+        <div class="settings-modal">
+          <div class="head">
+            <h2>Settings</h2>
+            <div style="display: flex; align-items: center; gap: 12px">
+              <span class="saved" id="saved" hidden>Saved ✓</span>
+              <button id="closeSettings" type="button" title="Close">✕</button>
+            </div>
+          </div>
+          <p class="hint" style="margin: 8px 0 0">
+            Bring your own key. Bookmark titles and URLs are sent only to your
+            endpoint. The key is stored locally in your browser and never
+            synced.
+          </p>
+          <div class="settings-grid">
+            <div class="settings-left">
+              <label for="provider">Provider</label>
+              <select id="provider"></select>
+
+              <label for="baseUrl">API base URL</label>
+              <div class="row">
+                <input
+                  id="baseUrl"
+                  placeholder="https://api.openai.com/v1"
+                  disabled
+                />
+                <button
+                  id="editBaseUrl"
+                  class="icon-btn"
+                  type="button"
+                  title="Edit base URL"
+                >
+                  ✏️
+                </button>
+              </div>
+              <div class="hint">
+                Auto-filled by provider. Click the pencil to edit.
+              </div>
+
+              <label for="apiKey">API key</label>
+              <input id="apiKey" type="password" placeholder="sk-…" />
+
+              <label for="model">Model</label>
+              <select id="modelSelect"></select>
+              <input id="modelCustom" placeholder="model name" hidden />
+
+              <div class="btn-row">
+                <button id="saveSettings" class="primary">Save</button>
+              </div>
+            </div>
+            <div class="settings-right">
+              <label for="prompt"
+                >Taxonomy prompt
+                <span class="hint" style="display: inline"
+                  >(how AI proposes categories)</span
+                ></label
+              >
+              <textarea id="prompt" rows="4"></textarea>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
 
     <script type="module" src="./app.js"></script>
   </body>

@@ -1,11 +1,16 @@
-import { pool, chunk } from '../core/batch';
-import { BATCH_SIZE, CONCURRENCY } from '../core/cost';
-import { proposeTaxonomy } from '../core/ai/pass1-taxonomy';
-import { assignBatch } from '../core/ai/pass2-assign';
-import { getSettings } from '../core/storage';
-import { send, type ReadScopeResult } from '../core/messaging';
-import type { Usage } from '../core/ai/json';
-import type { Assignment, FlatBookmark, RunState, Taxonomy } from '../core/types';
+import { pool, chunk } from "../core/batch";
+import { BATCH_SIZE, CONCURRENCY } from "../core/cost";
+import { proposeTaxonomy } from "../core/ai/pass1-taxonomy";
+import { assignBatch } from "../core/ai/pass2-assign";
+import { getSettings } from "../core/storage";
+import { send, type ReadScopeResult } from "../core/messaging";
+import type { Usage } from "../core/ai/json";
+import type {
+  Assignment,
+  FlatBookmark,
+  RunState,
+  Taxonomy,
+} from "../core/types";
 
 const tokens = (u: Usage) => u.inputTokens + u.outputTokens;
 
@@ -14,7 +19,7 @@ const tokens = (u: Usage) => u.inputTokens + u.outputTokens;
 // only asked to read the scope and (later) apply/undo.
 export class OrganizeRun {
   state: RunState = {
-    phase: 'idle',
+    phase: "idle",
     total: 0,
     done: 0,
     batchesDone: 0,
@@ -35,20 +40,25 @@ export class OrganizeRun {
 
   // Phase 1: ask the SW to read the scope, then propose a taxonomy.
   async start(folderIds?: string[]): Promise<Taxonomy> {
-    this.set({ phase: 'reading' });
-    const read = await send<ReadScopeResult>({ type: 'READ_SCOPE', folderIds });
+    this.set({ phase: "reading" });
+    const read = await send<ReadScopeResult>({ type: "READ_SCOPE", folderIds });
     if (!read.ok) return this.fail(read.error);
     this.bookmarks = read.data.bookmarks;
     this.scopeParentIds = read.data.scopeParentIds;
-    this.set({ phase: 'pass1', total: this.bookmarks.length });
+    this.set({ phase: "pass1", total: this.bookmarks.length });
 
     const settings = await getSettings();
     const configSeeds = [...new Set(settings.seedCategories)];
     const folderHints = [...new Set(read.data.folderNames)];
-    const { taxonomy, usage } = await proposeTaxonomy(settings, this.bookmarks, configSeeds, folderHints);
+    const { taxonomy, usage } = await proposeTaxonomy(
+      settings,
+      this.bookmarks,
+      configSeeds,
+      folderHints,
+    );
     this.taxonomy = taxonomy;
     this.set({
-      phase: 'review',
+      phase: "review",
       spentTokens: this.state.spentTokens + tokens(usage),
     });
     return taxonomy;
@@ -61,7 +71,12 @@ export class OrganizeRun {
     const settings = await getSettings();
     const batches = chunk(this.bookmarks, BATCH_SIZE);
     this.assignments = [];
-    this.set({ phase: 'pass2', batchesTotal: batches.length, batchesDone: 0, done: 0 });
+    this.set({
+      phase: "pass2",
+      batchesTotal: batches.length,
+      batchesDone: 0,
+      done: 0,
+    });
 
     await pool(
       batches,
@@ -82,15 +97,15 @@ export class OrganizeRun {
           done: this.assignments.length,
           spentTokens: this.state.spentTokens + res.tok,
         });
-      }
+      },
     );
 
-    this.set({ phase: 'preview' });
+    this.set({ phase: "preview" });
     return this.assignments;
   }
 
   private fail(error: string): never {
-    this.set({ phase: 'error', error });
+    this.set({ phase: "error", error });
     throw new Error(error);
   }
 }

@@ -1,6 +1,6 @@
-import { taxonomySchema, TAXONOMY_HINT } from './schema';
-import { generateJson, type Usage } from './json';
-import type { FlatBookmark, Settings, Taxonomy } from '../types';
+import { taxonomySchema, TAXONOMY_HINT } from "./schema";
+import { generateJson, type Usage } from "./json";
+import type { FlatBookmark, Settings, Taxonomy } from "../types";
 
 const SYSTEM = `Group bookmarks into categories. Single word per name. Abbreviate. Merge similar. No articles. Tight. No cap.
 Children (sub-categories) are OPTIONAL — only add when 5+ bookmarks clearly share a distinct sub-theme. Never use bookmark names as children. Most categories should have NO children.
@@ -14,26 +14,35 @@ export async function proposeTaxonomy(
   settings: Settings,
   bookmarks: FlatBookmark[],
   configSeeds: string[],
-  folderHints: string[] = []
+  folderHints: string[] = [],
 ): Promise<{ taxonomy: Taxonomy; usage: Usage }> {
   const parts: string[] = [];
-  if (configSeeds.length) parts.push(`Required categories (keep as-is): ${configSeeds.join(', ')}.`);
-  if (folderHints.length) parts.push(`Existing folder hints (merge/rename freely): ${folderHints.join(', ')}.`);
-  const list = bookmarks.map((b) => `${b.title} | ${hostOf(b.url)}`).join('\n');
+  if (configSeeds.length)
+    parts.push(`Required categories (keep as-is): ${configSeeds.join(", ")}.`);
+  if (folderHints.length)
+    parts.push(
+      `Existing folder hints (merge/rename freely): ${folderHints.join(", ")}.`,
+    );
+  const list = bookmarks.map((b) => `${b.title} | ${hostOf(b.url)}`).join("\n");
 
   const { data, usage } = await generateJson(
     settings,
     taxonomySchema,
     settings.taxonomyPrompt || SYSTEM,
-    `${parts.join('\n')}\nBookmarks:\n${list}`,
-    TAXONOMY_HINT
+    `${parts.join("\n")}\nBookmarks:\n${list}`,
+    TAXONOMY_HINT,
   );
 
-  const taxonomy: Taxonomy = data.categories.map((c) => ({ name: c.name, children: c.children }));
+  const taxonomy: Taxonomy = data.categories.map((c) => ({
+    name: c.name,
+    children: c.children,
+  }));
 
   // Strip children that look like individual bookmark names, not sub-categories.
   const titleSet = new Set(bookmarks.map((b) => b.title.toLowerCase()));
-  const hostSet = new Set(bookmarks.map((b) => hostOf(b.url).toLowerCase()).filter(Boolean));
+  const hostSet = new Set(
+    bookmarks.map((b) => hostOf(b.url).toLowerCase()).filter(Boolean),
+  );
   for (const cat of taxonomy) {
     cat.children = (cat.children ?? []).filter((ch) => {
       const lc = ch.toLowerCase();

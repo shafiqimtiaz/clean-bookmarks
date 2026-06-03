@@ -2,7 +2,8 @@
 
 export function chunk<T>(items: T[], size: number): T[][] {
   const out: T[][] = [];
-  for (let i = 0; i < items.length; i += size) out.push(items.slice(i, i + size));
+  for (let i = 0; i < items.length; i += size)
+    out.push(items.slice(i, i + size));
   return out;
 }
 
@@ -12,7 +13,7 @@ export async function pool<T, R>(
   items: T[],
   concurrency: number,
   worker: (item: T, index: number) => Promise<R>,
-  onResult?: (result: R, index: number) => void
+  onResult?: (result: R, index: number) => void,
 ): Promise<R[]> {
   const results: R[] = new Array(items.length);
   let cursor = 0;
@@ -26,6 +27,8 @@ export async function pool<T, R>(
     }
   };
 
-  await Promise.all(Array.from({ length: Math.min(concurrency, items.length) }, run));
+  await Promise.all(
+    Array.from({ length: Math.min(concurrency, items.length) }, run),
+  );
   return results;
 }

@@ -1,8 +1,34 @@
+function storageKey(url: string): string {
+  return "cb-tab:" + url.split("#")[0].split("?")[0];
+}
+
 export async function focusOrCreate(url: string): Promise<void> {
-  const tabs = await chrome.tabs.query({ url });
-  if (tabs.length && tabs[0]?.id) {
-    await chrome.tabs.update(tabs[0].id, { active: true });
-  } else {
-    await chrome.tabs.create({ url });
+  const key = storageKey(url);
+  const data = await chrome.storage.local.get(key);
+  const existing = data[key] as number | undefined;
+
+  if (existing) {
+    try {
+      await chrome.tabs.update(existing, { active: true });
+      return;
+    } catch {
+      // Tab was closed, stale entry — remove and fall through to create.
+      await chrome.storage.local.remove(key);
+    }
+  }
+
+  const tab = await chrome.tabs.create({ url });
+  if (tab.id) {
+    await chrome.storage.local.set({ [key]: tab.id });
   }
 }
+
+// Clean up when a tracked tab is closed.
+chrome.tabs.onRemoved.addListener(async (tabId) => {
+  const all = await chrome.storage.local.get(null);
+  for (const [key, val] of Object.entries(all)) {
+    if (key.startsWith("cb-tab:") && val === tabId) {
+      await chrome.storage.local.remove(key);
+    }
+  }
+});

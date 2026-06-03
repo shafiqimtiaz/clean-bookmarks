@@ -1,4 +1,4 @@
-import type { FlatBookmark } from './types';
+import type { FlatBookmark } from "./types";
 
 export const BATCH_SIZE = 100;
 export const CONCURRENCY = 3;
@@ -6,8 +6,8 @@ export const CONCURRENCY = 3;
 // Rough per-1K-token USD pricing for the cost estimate. These are display
 // hints only; real spend comes from the provider's usage in responses.
 const PRICING: Record<string, { in: number; out: number }> = {
-  'gpt-4o-mini': { in: 0.00015, out: 0.0006 },
-  'gpt-4o': { in: 0.0025, out: 0.01 },
+  "gpt-4o-mini": { in: 0.00015, out: 0.0006 },
+  "gpt-4o": { in: 0.0025, out: 0.01 },
   default: { in: 0.0005, out: 0.0015 },
 };
 
@@ -23,9 +23,14 @@ export interface CostEstimate {
   usd: number;
 }
 
-export function estimateCost(bookmarks: FlatBookmark[], model: string): CostEstimate {
+export function estimateCost(
+  bookmarks: FlatBookmark[],
+  model: string,
+): CostEstimate {
   const batches = Math.ceil(bookmarks.length / BATCH_SIZE);
-  const pass1Prompt = estTokens(bookmarks.map((b) => `${b.title} ${b.url}`).join('\n'));
+  const pass1Prompt = estTokens(
+    bookmarks.map((b) => `${b.title} ${b.url}`).join("\n"),
+  );
   const pass2Prompt = pass1Prompt; // each bookmark sent once more in assign pass
   const promptTokens = pass1Prompt + pass2Prompt;
   const completionTokens = bookmarks.length * 12 + 400; // assignments + taxonomy

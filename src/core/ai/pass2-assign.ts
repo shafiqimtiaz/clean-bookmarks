@@ -1,11 +1,13 @@
-import { assignmentsSchema, ASSIGNMENTS_HINT } from './schema';
-import { generateJson, type Usage } from './json';
-import type { Assignment, FlatBookmark, Settings, Taxonomy } from '../types';
+import { assignmentsSchema, ASSIGNMENTS_HINT } from "./schema";
+import { generateJson, type Usage } from "./json";
+import type { Assignment, FlatBookmark, Settings, Taxonomy } from "../types";
 
 function system(taxonomy: Taxonomy): string {
   const cats = taxonomy
-    .map((c) => (c.children?.length ? `${c.name} > [${c.children.join(', ')}]` : c.name))
-    .join('\n');
+    .map((c) =>
+      c.children?.length ? `${c.name} > [${c.children.join(", ")}]` : c.name,
+    )
+    .join("\n");
   return `Assign each bookmark to exactly one category. Only use sub when 2+ bookmarks share it — otherwise leave sub null. A folder with 1 item is noise. Never invent categories. Return one entry per bookmark idx.\n\nTaxonomy:\n${cats}`;
 }
 
@@ -14,16 +16,16 @@ function system(taxonomy: Taxonomy): string {
 export async function assignBatch(
   settings: Settings,
   taxonomy: Taxonomy,
-  batch: FlatBookmark[]
+  batch: FlatBookmark[],
 ): Promise<{ assignments: Assignment[]; usage: Usage }> {
-  const list = batch.map((b) => `${b.idx}: ${b.title} | ${b.url}`).join('\n');
+  const list = batch.map((b) => `${b.idx}: ${b.title} | ${b.url}`).join("\n");
 
   const { data, usage } = await generateJson(
     settings,
     assignmentsSchema,
     system(taxonomy),
     `Bookmarks:\n${list}`,
-    ASSIGNMENTS_HINT
+    ASSIGNMENTS_HINT,
   );
 
   const known = new Set(batch.map((b) => b.idx));

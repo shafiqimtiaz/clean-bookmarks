@@ -1,12 +1,12 @@
-import { STORAGE_KEYS, type Settings, type Snapshot } from './types';
+import { STORAGE_KEYS, type Settings, type Snapshot } from "./types";
 
 const DEFAULT_SETTINGS: Settings = {
-  baseUrl: 'https://api.openai.com/v1',
-  apiKey: '',
+  baseUrl: "https://api.openai.com/v1",
+  apiKey: "",
   apiKeys: {},
-  model: 'gpt-4o-mini',
+  model: "gpt-4o-mini",
   seedCategories: [],
-  taxonomyPrompt: '',
+  taxonomyPrompt: "",
   consentAt: null,
 };
 
@@ -15,7 +15,9 @@ export async function getSettings(): Promise<Settings> {
   return { ...DEFAULT_SETTINGS, ...(res[STORAGE_KEYS.settings] ?? {}) };
 }
 
-export async function saveSettings(patch: Partial<Settings>): Promise<Settings> {
+export async function saveSettings(
+  patch: Partial<Settings>,
+): Promise<Settings> {
   const next = { ...(await getSettings()), ...patch };
   await chrome.storage.local.set({ [STORAGE_KEYS.settings]: next });
   return next;

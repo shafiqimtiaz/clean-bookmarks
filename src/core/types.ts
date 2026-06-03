@@ -52,15 +52,15 @@ export interface SerializedNode {
 }
 
 export type RunPhase =
-  | 'idle'
-  | 'reading'
-  | 'pass1' // proposing taxonomy
-  | 'review' // user editing taxonomy
-  | 'pass2' // assigning
-  | 'preview' // ready to apply
-  | 'applying'
-  | 'done'
-  | 'error';
+  | "idle"
+  | "reading"
+  | "pass1" // proposing taxonomy
+  | "review" // user editing taxonomy
+  | "pass2" // assigning
+  | "preview" // ready to apply
+  | "applying"
+  | "done"
+  | "error";
 
 export interface RunState {
   phase: RunPhase;
@@ -72,9 +72,9 @@ export interface RunState {
   error?: string;
 }
 
-export const ORGANIZED_FOLDER_PREFIX = '📁 Organized';
-export const UNSORTED_FOLDER = 'Unsorted';
+export const ORGANIZED_FOLDER_PREFIX = "📁 Organized";
+export const UNSORTED_FOLDER = "Unsorted";
 export const STORAGE_KEYS = {
-  settings: 'cb.settings',
-  snapshot: 'cb.snapshot',
+  settings: "cb.settings",
+  snapshot: "cb.snapshot",
 } as const;
