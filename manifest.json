@@ -3,8 +3,41 @@
   "name": "Clean Bookmarks",
   "version": "0.1.0",
   "description": "Organize your browser bookmarks with AI using your own API key. Local-first and private.",
-  "permissions": ["bookmarks", "storage"],
-  "optional_host_permissions": ["https://*/*"],
+  "permissions": [
+    "bookmarks",
+    "storage"
+  ],
+  "optional_host_permissions": [
+    "https://api.anthropic.com/*",
+    "https://api.cerebras.ai/*",
+    "https://gateway.ai.cloudflare.com/*",
+    "https://api.cloudflare.com/*",
+    "https://api.deepseek.com/*",
+    "https://api.fireworks.ai/*",
+    "https://api.individual.githubcopilot.com/*",
+    "https://generativelanguage.googleapis.com/*",
+    "https://{location}-aiplatform.googleapis.com/*",
+    "https://api.groq.com/*",
+    "https://api.kimi.com/*",
+    "https://api.minimax.io/*",
+    "https://api.minimaxi.com/*",
+    "https://api.mistral.ai/*",
+    "https://api.moonshot.ai/*",
+    "https://api.moonshot.cn/*",
+    "https://api.openai.com/*",
+    "https://chatgpt.com/*",
+    "https://opencode.ai/*",
+    "https://openrouter.ai/*",
+    "https://api.together.ai/*",
+    "https://ai-gateway.vercel.sh/*",
+    "https://api.x.ai/*",
+    "https://api.xiaomimimo.com/*",
+    "https://token-plan-ams.xiaomimimo.com/*",
+    "https://token-plan-cn.xiaomimimo.com/*",
+    "https://token-plan-sgp.xiaomimimo.com/*",
+    "https://api.z.ai/*",
+    "https://*/*"
+  ],
   "background": {
     "service_worker": "service-worker.js",
     "type": "module"
@@ -12,7 +45,6 @@
   "action": {
     "default_title": "Clean Bookmarks"
   },
-
   "icons": {
     "16": "icons/icon16.png",
     "48": "icons/icon48.png",

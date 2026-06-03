@@ -4,6 +4,9 @@
   "type": "module",
   "private": true,
   "scripts": {
+    "sync-models": "bun run scripts/sync-models.ts",
+    "build-manifest": "bun run scripts/build-manifest.ts",
+    "prebuild": "bun run sync-models && bun run build-manifest",
     "build": "bun build.ts",
     "typecheck": "bunx tsc --noEmit",
     "test": "bun test"
@@ -16,8 +19,7 @@
     "typescript": "^5"
   },
   "dependencies": {
-    "@ai-sdk/openai-compatible": "^2.0.48",
-    "ai": "^6.0.195",
+    "@earendil-works/pi-ai": "^0.78.0",
     "zod": "^4.4.3"
   }
 }

@@ -4,7 +4,6 @@ import { proposeTaxonomy } from "../core/ai/pass1-taxonomy";
 import { assignBatch } from "../core/ai/pass2-assign";
 import { getSettings } from "../core/storage";
 import { send, type ReadScopeResult } from "../core/messaging";
-import type { Usage } from "../core/ai/json";
 import type {
   Assignment,
   FlatBookmark,
@@ -12,7 +11,12 @@ import type {
   Taxonomy,
 } from "../core/types";
 
-const tokens = (u: Usage) => u.inputTokens + u.outputTokens;
+// Local usage shape surfaced to the progress UI. Matches what the
+// pass1/pass2 functions return: per-call token counts + USD.
+type RunUsage = { input: number; output: number; costUsd: number };
+
+const tokens = (u: RunUsage) => u.input + u.output;
+const usd = (u: RunUsage) => u.costUsd;
 
 // The long-running organize job lives here, in the full-page tab context,
 // so the MV3 service worker's ~30s idle kill never interrupts it. The SW is

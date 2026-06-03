@@ -8,12 +8,13 @@ import {
 } from "../core/messaging";
 import { hasHostPermission, requestHostPermission } from "../core/permissions";
 import {
-  PROVIDERS,
-  CUSTOM_PROVIDER,
-  providerForBaseUrl,
+  getProviders,
+  getProvider,
+  getModel,
+  CUSTOM_PROVIDER_ID,
 } from "../core/providers";
 import { DEFAULT_TAXONOMY_PROMPT } from "../core/ai/pass1-taxonomy";
-import type { Assignment, RunState, Taxonomy } from "../core/types";
+import type { Assignment, RunState, Settings, Taxonomy } from "../core/types";
 
 const $ = <T extends HTMLElement>(id: string) =>
   document.getElementById(id) as T;
@@ -63,11 +64,19 @@ async function showEstimate() {
   const read = await send<ReadScopeResult>({ type: "READ_SCOPE" });
   if (!read.ok) return fail(read.error);
   const settings = await getSettings();
-  const est = estimateCost(read.data.bookmarks, settings.model);
+  const est = estimateCost(read.data.bookmarks, settings);
+  const modelLabel = settingsLabel(settings);
   $("estimateText").textContent =
     `${read.data.bookmarks.length} bookmarks · ~${est.calls} API calls · ` +
-    `~${est.promptTokens + est.completionTokens} tokens · ≈ $${est.usd} on ${settings.model}`;
+    `~${est.promptTokens + est.completionTokens} tokens · ≈ $${est.usd} on ${modelLabel}`;
   show("estimate");
+}
+
+function settingsLabel(s: Settings): string {
+  if (s.provider === CUSTOM_PROVIDER_ID) return s.model || "custom";
+  const p = getProvider(s.provider);
+  const m = getModel(s.provider, s.model);
+  return m ? `${p?.label ?? s.provider} / ${m.name}` : s.model;
 }
 
 $("consentBtn").addEventListener(
@@ -254,20 +263,22 @@ function lockBaseUrl(locked: boolean) {
 }
 
 function fillModels(providerId: string, selected?: string) {
-  const preset = ALL.find((p) => p.id === providerId) ?? CUSTOM_PROVIDER;
+  const preset = getProvider(providerId);
   modelSelect.innerHTML = "";
-  for (const m of preset.models) {
-    const opt = document.createElement("option");
-    opt.value = m;
-    opt.textContent = m;
-    modelSelect.appendChild(opt);
+  if (preset) {
+    for (const m of preset.models) {
+      const opt = document.createElement("option");
+      opt.value = m.id;
+      opt.textContent = m.name;
+      modelSelect.appendChild(opt);
+    }
   }
   const custom = document.createElement("option");
   custom.value = CUSTOM_MODEL;
   custom.textContent = "Custom…";
   modelSelect.appendChild(custom);
 
-  const known = selected && preset.models.includes(selected);
+  const known = selected && preset?.models.some((m) => m.id === selected);
   modelSelect.value = known ? selected! : CUSTOM_MODEL;
   modelCustom.value = known ? "" : (selected ?? "");
   modelCustom.hidden = modelSelect.value !== CUSTOM_MODEL;
@@ -279,11 +290,12 @@ function chosenModel(): string {
     : modelSelect.value;
 }
 
-const ALL = [...PROVIDERS, CUSTOM_PROVIDER];
+const ALL = [...getProviders(), { id: CUSTOM_PROVIDER_ID, label: "Custom (OpenAI-compatible)", baseUrl: "", models: [] }];
 let keys: Record<string, string> = {};
 let currentProvider = "openai";
 
 const baseUrl = $<HTMLInputElement>("baseUrl");
+const editBaseUrl = $("editBaseUrl") as HTMLButtonElement;
 const editBaseUrlEl = $<HTMLButtonElement>("editBaseUrl");
 editBaseUrlEl.addEventListener("click", () => {
   lockBaseUrl(false);
@@ -293,6 +305,9 @@ editBaseUrlEl.addEventListener("click", () => {
 const apiKeyInput = $<HTMLInputElement>("apiKey");
 const modelSelectEl = $<HTMLSelectElement>("modelSelect");
 const modelCustomEl = $<HTMLInputElement>("modelCustom");
+const modelSelect = modelSelectEl;
+const modelCustom = modelCustomEl;
+const provider = $<HTMLSelectElement>("provider");
 const prompt = $<HTMLTextAreaElement>("prompt");
 const saved = $("saved");
 
@@ -307,26 +322,31 @@ async function initSettings() {
   }
 
   const s = await getSettings();
-  const p = providerForBaseUrl(s.baseUrl);
+  const providerId = s.provider;
+  const provider = getProvider(providerId);
   keys = { ...s.apiKeys };
-  if (s.apiKey && !keys[p.id]) keys[p.id] = s.apiKey;
-  currentProvider = p.id;
-  providerEl.value = p.id;
-  baseUrl.value = s.baseUrl;
-  apiKeyInput.value = keys[p.id] ?? "";
-  fillModels(p.id, s.model);
+  if (s.apiKey && !keys[providerId]) keys[providerId] = s.apiKey;
+  currentProvider = providerId;
+  providerEl.value = providerId;
+  baseUrl.value = providerId === CUSTOM_PROVIDER_ID ? s.baseUrl : (provider?.baseUrl ?? s.baseUrl);
+  apiKeyInput.value = keys[providerId] ?? "";
+  fillModels(providerId, s.model);
   prompt.value = s.taxonomyPrompt || DEFAULT_TAXONOMY_PROMPT;
-  lockBaseUrl(p.id !== "custom");
+  lockBaseUrl(providerId !== CUSTOM_PROVIDER_ID);
 }
 
 $<HTMLSelectElement>("provider").addEventListener("change", () => {
   keys[currentProvider] = apiKeyInput.value.trim();
-  const preset = ALL.find((p) => p.id === provider.value) ?? CUSTOM_PROVIDER;
-  currentProvider = preset.id;
-  apiKeyInput.value = keys[preset.id] ?? "";
-  if (preset.id !== "custom") baseUrl.value = preset.baseUrl;
-  fillModels(preset.id, preset.models[0]);
-  lockBaseUrl(preset.id !== "custom");
+  const id = provider.value;
+  const preset = getProvider(id);
+  currentProvider = id;
+  apiKeyInput.value = keys[id] ?? "";
+  if (id !== CUSTOM_PROVIDER_ID && preset) {
+    baseUrl.value = preset.baseUrl;
+  }
+  const firstModel = preset?.models[0]?.id;
+  fillModels(id, firstModel);
+  lockBaseUrl(id !== CUSTOM_PROVIDER_ID);
 });
 
 modelSelectEl.addEventListener("change", () => {
@@ -335,20 +355,29 @@ modelSelectEl.addEventListener("change", () => {
 
 $("saveSettings").addEventListener("click", async () => {
   const url = baseUrl.value.trim();
-  if (!(await hasHostPermission(url))) {
-    const granted = await requestHostPermission(url);
+  const id = currentProvider;
+  const model = chosenModel() || "MiniMax-M2.7";
+  const tentative: Settings = {
+    ...(await getSettings()),
+    provider: id,
+    model,
+    baseUrl: url,
+  };
+  if (!(await hasHostPermission(tentative))) {
+    const granted = await requestHostPermission(tentative);
     if (!granted) {
       alert("Permission denied. The organizer cannot call that endpoint.");
       return;
     }
   }
   const key = apiKeyInput.value.trim();
-  keys[currentProvider] = key;
+  keys[id] = key;
   await saveSettings({
+    provider: id,
+    model,
     baseUrl: url,
     apiKey: key,
     apiKeys: keys,
-    model: chosenModel() || "gpt-4o-mini",
     taxonomyPrompt:
       prompt.value.trim() === DEFAULT_TAXONOMY_PROMPT
         ? ""

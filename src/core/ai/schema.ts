@@ -1,7 +1,9 @@
 import { z } from "zod";
+import { Type, type Tool } from "@earendil-works/pi-ai";
 
-// Zod schemas drive AI SDK structured output (Output.object): the SDK builds
-// the provider JSON schema, validates the response, and retries on mismatch.
+// Zod schemas are still used for parse-time validation on pass 2 (which
+// returns JSON in a text block). Pass 1 returns structured args via tool
+// calling and is validated by TypeBox at the tool boundary.
 
 export const taxonomySchema = z.object({
   categories: z.array(
@@ -23,11 +25,31 @@ export const assignmentsSchema = z.object({
   ),
 });
 
-// Plain-text shape hints injected into the prompt. Reasoning models (e.g.
-// MiniMax-M2.7) ignore json_object mode and emit prose, so we instruct the
-// exact JSON shape and parse tolerantly instead of relying on the provider.
+// Plain-text shape hints for pass 2's "return JSON" prompt. Reasoning models
+// ignore json_object mode and emit prose, so we instruct the exact JSON
+// shape and parse tolerantly (see parse-json.ts).
 export const TAXONOMY_HINT =
   '{ "categories": [ { "name": "string", "children": ["string"] } ] }';
 
 export const ASSIGNMENTS_HINT =
   '{ "assignments": [ { "idx": 0, "cat": "string", "sub": "string or null", "title": "Clean, precise bookmark name without ambiguity" } ] }';
+
+// TypeBox tool definition for pass 1. The model invokes this tool with
+// structured args; pi-ai validates the args against the schema and
+// surfaces them in toolCall.arguments.
+export const taxonomyTool: Tool = {
+  name: "propose_taxonomy",
+  description:
+    "Propose a taxonomy of bookmark categories. Each category has a name " +
+    "and an optional list of sub-category names. Names should be 1-2 words, " +
+    "no articles, no special characters.",
+  parameters: Type.Object({
+    categories: Type.Array(
+      Type.Object({
+        name: Type.String(),
+        children: Type.Array(Type.String()),
+      }),
+      { description: "Top-level categories; merged with any required seeds." },
+    ),
+  }),
+};

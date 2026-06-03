@@ -1,15 +1,9 @@
-import type { FlatBookmark } from "./types";
+import type { FlatBookmark, Settings } from "./types";
+import { getModel, CUSTOM_PROVIDER_ID } from "./providers";
+import type { SlimModel } from "./providers";
 
 export const BATCH_SIZE = 100;
 export const CONCURRENCY = 3;
-
-// Rough per-1K-token USD pricing for the cost estimate. These are display
-// hints only; real spend comes from the provider's usage in responses.
-const PRICING: Record<string, { in: number; out: number }> = {
-  "gpt-4o-mini": { in: 0.00015, out: 0.0006 },
-  "gpt-4o": { in: 0.0025, out: 0.01 },
-  default: { in: 0.0005, out: 0.0015 },
-};
 
 // ~4 chars per token heuristic.
 function estTokens(text: string): number {
@@ -23,9 +17,20 @@ export interface CostEstimate {
   usd: number;
 }
 
+// Returns the pricing (per 1M tokens) for the user's chosen model. For
+// "custom" the model has zero cost — the user knows their own server.
+function pricingFor(settings: Settings): { in: number; out: number } {
+  if (settings.provider === CUSTOM_PROVIDER_ID || !settings.apiKey) {
+    return { in: 0, out: 0 };
+  }
+  const m = getModel(settings.provider, settings.model);
+  if (!m) return { in: 0.5, out: 1.5 };
+  return { in: m.cost.in, out: m.cost.out };
+}
+
 export function estimateCost(
   bookmarks: FlatBookmark[],
-  model: string,
+  settings: Settings,
 ): CostEstimate {
   const batches = Math.ceil(bookmarks.length / BATCH_SIZE);
   const pass1Prompt = estTokens(
@@ -34,13 +39,21 @@ export function estimateCost(
   const pass2Prompt = pass1Prompt; // each bookmark sent once more in assign pass
   const promptTokens = pass1Prompt + pass2Prompt;
   const completionTokens = bookmarks.length * 12 + 400; // assignments + taxonomy
-  const calls = 1 + batches; // 1 taxonomy + N assign batches
+  const calls = 1 + batches;
 
-  const p = PRICING[model] ?? PRICING.default!;
-  const usd = (promptTokens / 1000) * p.in + (completionTokens / 1000) * p.out;
+  const p = pricingFor(settings);
+  // pi-ai's cost.in/out are per 1M tokens.
+  const usd = (promptTokens / 1_000_000) * p.in +
+    (completionTokens / 1_000_000) * p.out;
   return { calls, promptTokens, completionTokens, usd: round(usd) };
 }
 
 function round(n: number): number {
   return Math.round(n * 1000) / 1000;
+}
+
+// Re-export so other modules can fetch the resolved model from one place.
+export function modelFor(settings: Settings): SlimModel | null {
+  if (settings.provider === CUSTOM_PROVIDER_ID) return null;
+  return getModel(settings.provider, settings.model);
 }

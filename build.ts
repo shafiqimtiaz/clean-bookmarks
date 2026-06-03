@@ -21,6 +21,7 @@ const result = await Bun.build({
   format: 'esm',
   minify: true,
   naming: '[name].[ext]',
+  splitting: true,
 });
 
 if (!result.success) {

@@ -28,10 +28,15 @@ export interface Assignment {
 }
 
 export interface Settings {
-  baseUrl: string; // e.g. https://api.openai.com/v1
-  apiKey: string; // active key (the one matching the selected provider)
+  // Provider id from src/core/ai/models.json, or "custom" for arbitrary
+  // OpenAI-compatible endpoints (Ollama, LM Studio, vLLM, etc.).
+  provider: string;
+  model: string; // model id from the registry, or user-typed when provider=custom
+  apiKey: string; // active key for the selected provider
   apiKeys: Record<string, string>; // remembered key per provider id
-  model: string; // e.g. gpt-4o-mini
+  // Required only when provider === "custom". The runtime reads this for
+  // host permissions and the AI client baseUrl.
+  baseUrl: string;
   seedCategories: string[]; // optional user-seeded categories (pass 1 respects)
   taxonomyPrompt: string; // custom prompt for category generation (empty = use default)
   consentAt: number | null; // epoch ms of first-run consent, null = not given

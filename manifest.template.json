@@ -1,0 +1,21 @@
+{
+  "manifest_version": 3,
+  "name": "Clean Bookmarks",
+  "version": "0.1.0",
+  "description": "Organize your browser bookmarks with AI using your own API key. Local-first and private.",
+  "permissions": ["bookmarks", "storage"],
+  "optional_host_permissions": ["https://*/*"],
+  "background": {
+    "service_worker": "service-worker.js",
+    "type": "module"
+  },
+  "action": {
+    "default_title": "Clean Bookmarks"
+  },
+
+  "icons": {
+    "16": "icons/icon16.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  }
+}

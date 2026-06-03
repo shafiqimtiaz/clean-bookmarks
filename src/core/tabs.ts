@@ -1,5 +1,6 @@
 function storageKey(url: string): string {
-  return "cb-tab:" + url.split("#")[0].split("?")[0];
+  const noHash = url.split("#")[0] ?? url;
+  return "cb-tab:" + noHash.split("?")[0];
 }
 
 export async function focusOrCreate(url: string): Promise<void> {
