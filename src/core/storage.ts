@@ -6,6 +6,7 @@ const DEFAULT_SETTINGS: Settings = {
   apiKeys: {},
   model: 'gpt-4o-mini',
   seedCategories: [],
+  taxonomyPrompt: '',
   consentAt: null,
 };
 

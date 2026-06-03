@@ -1,20 +1,20 @@
 ---
-name: Neumorphism
+name: Brutalism
 colors:
-  primary: "#006666"
-  secondary: "#F1F2F5"
-  success: "#00A63D"
-  warning: "#FE9900"
-  danger: "#FF2157"
-  surface: "#E7E5E4"
-  text: "#1E2938"
-  neutral: "#E7E5E4"
+  primary: "#DD614C"
+  secondary: "#DAA144"
+  success: "#16A34A"
+  warning: "#D97706"
+  danger: "#DC2626"
+  surface: "#FFFFFF"
+  text: "#111827"
+  neutral: "#FFFFFF"
 typography:
   h1:
-    fontFamily: "Space Mono"
+    fontFamily: "Darker Grotesque"
     fontSize: 3rem
   body-md:
-    fontFamily: "Space Mono"
+    fontFamily: "Darker Grotesque"
     fontSize: 1rem
   label-caps:
     fontFamily: "JetBrains Mono"
@@ -27,29 +27,29 @@ rounded:
 spacing:
   sm: 4px
   md: 8px
-  sourceScale: "compact density mode"
+  sourceScale: "4/8/12/16/24/32"
 ---
 
 ## Overview
 
-Soft, extruded UI elements with inner and outer shadows on monochromatic surfaces for a tactile, embedded look.
+Raw, anti-design aesthetic inspired by concrete architecture with unadorned elements, jarring layouts, and functional minimalism.
 
 ## Style Foundations
 
-- **Visual style:** minimal, clean, high-contrast, playful, matrix
+- **Visual style:** bold
 - **Typography scale:** desktop-first expressive scale
-- **Typography fonts:** primary=Space Mono, display=Space Mono, mono=JetBrains Mono
+- **Typography fonts:** primary=Darker Grotesque, display=Darker Grotesque, mono=JetBrains Mono
 - **Typography weights:** 100, 200, 300, 400, 500, 600, 700, 800, 900
-- **Color palette:** primary, secondary, success, warning, danger, info
-- **Spacing scale:** compact density mode
+- **Color palette:** primary, secondary, neutral, success, warning, danger
+- **Spacing scale:** 4/8/12/16/24/32
 
 ## Colors
 
-- **Primary (#006666):** Token from style foundations.
-- **Secondary (#F1F2F5):** Token from style foundations.
-- **Success (#00A63D):** Token from style foundations.
-- **Warning (#FE9900):** Token from style foundations.
-- **Danger (#FF2157):** Token from style foundations.
-- **Surface (#E7E5E4):** Token from style foundations.
-- **Text (#1E2938):** Token from style foundations.
-- **Neutral (#E7E5E4):** Derived from the surface token for official format compatibility.
+- **Primary (#DD614C):** Token from style foundations.
+- **Secondary (#DAA144):** Token from style foundations.
+- **Success (#16A34A):** Token from style foundations.
+- **Warning (#D97706):** Token from style foundations.
+- **Danger (#DC2626):** Token from style foundations.
+- **Surface (#FFFFFF):** Token from style foundations.
+- **Text (#111827):** Token from style foundations.
+- **Neutral (#FFFFFF):** Derived from the surface token for official format compatibility.

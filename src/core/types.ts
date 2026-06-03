@@ -32,6 +32,7 @@ export interface Settings {
   apiKeys: Record<string, string>; // remembered key per provider id
   model: string; // e.g. gpt-4o-mini
   seedCategories: string[]; // optional user-seeded categories (pass 1 respects)
+  taxonomyPrompt: string; // custom prompt for category generation (empty = use default)
   consentAt: number | null; // epoch ms of first-run consent, null = not given
 }
 

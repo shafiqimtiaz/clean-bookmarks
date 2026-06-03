@@ -3,37 +3,41 @@
   <head>
     <meta charset="utf-8" />
     <style>
-      /* Neumorphism — matches the main app. */
+      /* Brutalism — hard edges, raw type, no shadows. */
+      @import url('https://fonts.googleapis.com/css2?family=Darker+Grotesque:wght@400;600;700;800;900&family=JetBrains+Mono:wght@400;700&display=swap');
       :root {
-        --bg: #e7e5e4; --fg: #1e2938; --muted: #6b7280;
-        --primary: #006666; --primary-fg: #ffffff; --success: #00a63d;
-        --light: #ffffff; --dark: #bcbab9;
-        --out: 5px 5px 12px var(--dark), -5px -5px 12px var(--light);
-        --in: inset 4px 4px 8px var(--dark), inset -4px -4px 8px var(--light);
-        --r-sm: 8px; --r-md: 16px;
-        --mono: "Space Mono", ui-monospace, "JetBrains Mono", Menlo, Consolas, monospace;
+        --bg: #FFFFFF; --fg: #111827; --muted: #6B7280;
+        --primary: #DD614C; --primary-fg: #FFFFFF; --success: #16A34A;
+        --border: #111827;
+        --mono: "JetBrains Mono", ui-monospace, Menlo, Consolas, monospace;
+        --sans: "Darker Grotesque", ui-sans-serif, sans-serif;
       }
       [data-theme="dark"] {
-        --bg: #292d36; --fg: #e2e8f0; --muted: #94a3b8;
-        --primary: #2dd4bf; --primary-fg: #04201d; --success: #4ade80;
-        --light: #333845; --dark: #1d2027;
+        --bg: #1A1A1A; --fg: #E5E5E5; --muted: #9CA3AF;
+        --primary: #FF725E; --primary-fg: #111827;
+        --success: #4ADE80;
+        --border: #E5E5E5;
       }
       * { box-sizing: border-box; }
-      body { max-width: 520px; margin: 40px auto; font: 14px/1.5 var(--mono); color: var(--fg); background: var(--bg); padding: 24px; border-radius: var(--r-md); box-shadow: var(--out); }
-      h1 { font-size: 1.5rem; font-weight: 700; }
-      label { display: block; margin: 18px 0 6px; font-weight: 700; }
-      input, select { width: 100%; font-family: var(--mono); padding: 11px 14px; border: 0; border-radius: var(--r-sm); background: var(--bg); color: var(--fg); box-shadow: var(--in); }
-      input:focus, select:focus { outline: none; box-shadow: var(--in), 0 0 0 2px var(--primary); }
-      input:disabled { color: var(--muted); }
-      .hint { color: var(--muted); font-size: 12px; margin-top: 6px; }
-      button { font-family: var(--mono); font-weight: 700; margin-top: 22px; padding: 11px 18px; border: 0; border-radius: var(--r-sm); background: var(--bg); color: var(--primary); cursor: pointer; box-shadow: var(--out); transition: box-shadow .15s, transform .05s; }
-      button:hover { transform: translateY(-1px); }
-      button:active { box-shadow: var(--in); transform: translateY(0); }
-      .saved { color: var(--success); margin-left: 12px; font-weight: 700; }
+      body { max-width: 520px; margin: 0 auto; font: 18px/1.4 var(--sans); font-weight: 500; color: var(--fg); background: var(--bg); padding: 40px 24px; border: 4px solid var(--border); }
+      h1 { font: 900 2rem/1 var(--sans); letter-spacing: -1px; }
+      label { display: block; margin: 24px 0 8px; font: 700 14px var(--mono); text-transform: uppercase; letter-spacing: 1px; }
+      label:first-of-type { margin-top: 0; }
+      input, select { width: 100%; font: 400 15px var(--mono); padding: 14px 16px; border: 3px solid var(--border); background: var(--bg); color: var(--fg); margin-bottom: 4px; }
+      textarea { width: 100%; font: 400 14px var(--mono); padding: 12px 16px; border: 3px solid var(--border); background: var(--bg); color: var(--fg); }
+      textarea:focus { outline: none; border-color: var(--primary); }
+      input:focus, select:focus { outline: none; border-color: var(--primary); }
+      input:disabled { color: var(--muted); border-style: dashed; }
+      .hint { color: var(--muted); font: 400 14px var(--sans); margin-top: 6px; }
+      button { font: 700 14px var(--mono); padding: 14px 24px; border: 3px solid var(--border); cursor: pointer; background: var(--bg); color: var(--fg); transition: transform .05s; text-transform: uppercase; letter-spacing: 1px; }
+      .btn-row { display: flex; gap: 12px; margin-top: 16px; }
+      button:hover { transform: translate(-2px, -2px); box-shadow: 4px 4px 0 var(--border); }
+      button:active { transform: translate(2px, 2px); box-shadow: none; }
+      .saved { color: var(--success); margin-left: 12px; font: 700 14px var(--mono); }
       .row { display: flex; gap: 10px; align-items: center; }
       .icon-btn { margin-top: 0; padding: 11px 13px; color: var(--fg); flex-shrink: 0; }
-      .head { display: flex; align-items: center; justify-content: space-between; }
-      #themeToggle { margin-top: 0; padding: 9px 12px; border-radius: 999px; font-size: 15px; color: var(--fg); }
+      .head { display: flex; align-items: center; justify-content: space-between; border-bottom: 4px solid var(--border); padding-bottom: 12px; }
+      #themeToggle { padding: 10px 12px; font-size: 18px; border: 3px solid var(--border); }
       [hidden] { display: none !important; }
     </style>
   </head>
@@ -64,11 +68,14 @@
     <select id="modelSelect"></select>
     <input id="modelCustom" placeholder="model name" hidden />
 
-    <div>
+    <label for="prompt">Taxonomy prompt <span class="hint" style="display:inline">(customize how AI proposes categories)</span></label>
+    <textarea id="prompt" rows="4" style="resize:vertical;min-height:64px"></textarea>
+
+    <div class="btn-row">
       <button id="backBtn">Back</button>
       <button id="save">Save</button>
-      <span class="saved" id="saved" hidden>Saved ✓</span>
     </div>
+    <span class="saved" id="saved" hidden>Saved ✓</span>
     <script type="module" src="./options.js"></script>
   </body>
 </html>

@@ -5,6 +5,7 @@ import type { FlatBookmark, Settings, Taxonomy } from '../types';
 const SYSTEM = `Group bookmarks into categories. Single word per name. Abbreviate. Merge similar. No articles. Tight. No cap — produce as many as needed.
 Example: "react-hooks" + "react-state" + "react-router" → "react"`;
 
+export const DEFAULT_TAXONOMY_PROMPT = SYSTEM;
 // Pass 1: read all bookmarks and propose a taxonomy.
 // `configSeeds` = user's explicitly configured seed categories (guaranteed to survive).
 // `folderHints` = auto-detected existing folder names (advisory only — AI may merge/rename).
@@ -22,7 +23,7 @@ export async function proposeTaxonomy(
   const { data, usage } = await generateJson(
     settings,
     taxonomySchema,
-    SYSTEM,
+    settings.taxonomyPrompt || SYSTEM,
     `${parts.join('\n')}\nBookmarks:\n${list}`,
     TAXONOMY_HINT
   );

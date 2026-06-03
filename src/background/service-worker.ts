@@ -5,6 +5,7 @@ import {
   snapshotScope,
 } from '../core/bookmarks';
 import { clearSnapshot, getSnapshot, saveSnapshot } from '../core/storage';
+import { focusOrCreate } from '../core/tabs';
 import type { ApplyResult, Message, ReadScopeResult, Response } from '../core/messaging';
 
 // The only context that touches chrome.bookmarks. Each handler is fast and
@@ -63,5 +64,5 @@ async function handle(msg: Message): Promise<unknown> {
 // Open the full-page app when the user clicks the toolbar icon's "Organize".
 // (Popup handles the click; this is a fallback if no popup is set.)
 chrome.action.onClicked?.addListener(() => {
-  chrome.tabs.create({ url: chrome.runtime.getURL('app.html') });
+  focusOrCreate(chrome.runtime.getURL('app.html'));
 });

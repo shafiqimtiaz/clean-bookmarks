@@ -4,50 +4,50 @@
     <meta charset="utf-8" />
     <title>Clean Bookmarks</title>
     <style>
-      /* Neumorphism — soft extruded surfaces, shadow-based depth, mono type. */
+      /* Brutalism — hard edges, raw type, no shadows, anti-design. */
+      @import url('https://fonts.googleapis.com/css2?family=Darker+Grotesque:wght@400;600;700;800;900&family=JetBrains+Mono:wght@400;700&display=swap');
       :root {
-        --bg: #e7e5e4; --fg: #1e2938; --muted: #6b7280;
-        --primary: #006666; --primary-fg: #ffffff;
-        --danger: #ff2157;
-        --chip-fg: #006666;
-        --r-sm: 8px; --r-md: 16px;
-        --light: #ffffff; --dark: #bcbab9;
-        --out: 6px 6px 14px var(--dark), -6px -6px 14px var(--light);
-        --in: inset 5px 5px 10px var(--dark), inset -5px -5px 10px var(--light);
-        --mono: "Space Mono", ui-monospace, "JetBrains Mono", "Cascadia Code", Menlo, Consolas, monospace;
+        --bg: #FFFFFF; --fg: #111827; --muted: #6B7280;
+        --primary: #DD614C; --primary-fg: #FFFFFF;
+        --danger: #DC2626;
+        --border: #111827;
+        --mono: "JetBrains Mono", ui-monospace, Menlo, Consolas, monospace;
+        --sans: "Darker Grotesque", ui-sans-serif, sans-serif;
       }
       [data-theme="dark"] {
-        --bg: #292d36; --fg: #e2e8f0; --muted: #94a3b8;
-        --primary: #2dd4bf; --primary-fg: #04201d;
-        --danger: #ff5c7a;
-        --chip-fg: #5eead4;
-        --light: #333845; --dark: #1d2027;
+        --bg: #1A1A1A; --fg: #E5E5E5; --muted: #9CA3AF;
+        --primary: #FF725E; --primary-fg: #111827;
+        --danger: #EF4444;
+        --border: #E5E5E5;
       }
       * { box-sizing: border-box; }
-      body { max-width: 760px; margin: 32px auto; font: 14px/1.5 var(--mono); color: var(--fg); background: var(--bg); padding: 0 24px 40px; transition: background .25s, color .25s; }
-      h1 { font-size: 1.9rem; font-weight: 700; letter-spacing: -.5px; }
-      h2 { font-size: 1.1rem; }
-      .head { display: flex; align-items: center; justify-content: space-between; }
-      section { margin: 22px 0; padding: 22px; border-radius: var(--r-md); background: var(--bg); box-shadow: var(--out); }
-      button { font-family: var(--mono); font-weight: 700; padding: 11px 18px; border: 0; border-radius: var(--r-sm); cursor: pointer; font-size: 13px; background: var(--bg); color: var(--fg); box-shadow: var(--out); transition: box-shadow .15s, transform .05s; }
-      button:hover { transform: translateY(-1px); }
-      button:active { box-shadow: var(--in); transform: translateY(0); }
-      .primary { color: var(--primary); }
-      .danger { color: var(--danger); }
-      #themeToggle { padding: 9px 12px; border-radius: 999px; font-size: 15px; }
+      body { max-width: 760px; margin: 0 auto; font: 18px/1.4 var(--sans); font-weight: 500; color: var(--fg); background: var(--bg); padding: 40px 24px; }
+      h1 { font: 900 2.5rem/1 var(--sans); letter-spacing: -1px; }
+      h2 { font: 700 1.2rem/1 var(--sans); }
+      .head { display: flex; align-items: center; justify-content: space-between; border-bottom: 4px solid var(--border); padding-bottom: 12px; }
+      section { margin: 24px 0; padding: 24px; border: 3px solid var(--border); }
+      button { font: 700 14px var(--mono); padding: 14px 24px; border: 3px solid var(--border); cursor: pointer; background: var(--bg); color: var(--fg); transition: transform .05s; }
+      .btn-row { display: flex; gap: 12px; margin-top: 16px; }
+      button:hover { transform: translate(-2px, -2px); box-shadow: 4px 4px 0 var(--border); }
+      button:active { transform: translate(2px, 2px); box-shadow: none; }
+      .primary { background: var(--primary); color: var(--primary-fg); border-color: var(--primary); }
+      .primary:hover { box-shadow: 4px 4px 0 #000; }
+      .danger { color: var(--danger); border-color: var(--danger); }
+      #settingsBtn { padding: 10px 12px; font-size: 18px; border: 3px solid var(--border); }
+      #themeToggle { padding: 10px 12px; font-size: 18px; border: 3px solid var(--border); }
       [hidden] { display: none !important; }
-      .chip { display: inline-flex; align-items: center; gap: 6px; color: var(--chip-fg); border-radius: 999px; padding: 6px 12px; margin: 4px; font-size: 13px; background: var(--bg); box-shadow: var(--out); }
-      .chip [contenteditable] { outline: none; }
-      .chip button { background: none; box-shadow: none; color: var(--chip-fg); padding: 0 2px; font-size: 15px; }
-      .chip button:hover { transform: none; }
-      .bar { height: 14px; background: var(--bg); border-radius: 999px; box-shadow: var(--in); overflow: hidden; padding: 3px; }
-      .bar > div { height: 100%; background: var(--primary); border-radius: 999px; width: 0; transition: width .2s; }
-      .muted { color: var(--muted); font-size: 13px; }
-      ul.tree { list-style: none; padding-left: 4px; }
-      ul.tree > li { margin: 6px 0; padding: 8px 14px; border-radius: var(--r-sm); background: var(--bg); box-shadow: var(--out); }
+      .chip { display: inline-flex; align-items: center; gap: 6px; border: 3px solid var(--border); padding: 8px 16px; margin: 4px; font: 400 15px var(--mono); background: var(--bg); }
+      .chip [contenteditable] { outline: none; background: none; border: none; font: inherit; }
+      .chip button { background: none; border: none; color: var(--fg); padding: 0 4px; font-size: 16px; box-shadow: none; }
+      .chip button:hover { transform: none; box-shadow: none; }
+      .bar { height: 16px; border: 3px solid var(--border); padding: 2px; }
+      .bar > div { height: 100%; background: var(--primary); width: 0; transition: width .2s; }
+      .muted { color: var(--muted); font-size: 15px; }
+      ul.tree { list-style: none; padding-left: 0; }
+      ul.tree > li { margin: 6px 0; padding: 12px 18px; border: 2px solid var(--border); font-family: var(--mono); font-size: 13px; }
       .count { color: var(--muted); font-size: 12px; }
-      input.add { font-family: var(--mono); padding: 10px 14px; border: 0; border-radius: var(--r-sm); background: var(--bg); color: var(--fg); box-shadow: var(--in); }
-      input.add:focus { outline: none; box-shadow: var(--in), 0 0 0 2px var(--primary); }
+      input.add { font: 400 15px var(--mono); padding: 14px 16px; border: 3px solid var(--border); background: var(--bg); color: var(--fg); }
+      input.add:focus { outline: none; border-color: var(--primary); }
     </style>
   </head>
   <body>
@@ -87,11 +87,11 @@
       <h2>Review categories</h2>
       <p class="muted">Rename, remove, or add categories. These are what every bookmark gets sorted into.</p>
       <div id="chips"></div>
-      <div style="margin-top:10px">
+      <div class="btn-row">
         <input class="add" id="addCat" placeholder="Add a category" />
         <button class="ghost" id="addCatBtn">Add</button>
       </div>
-      <p style="margin-top:16px">
+      <p class="btn-row">
         <button class="primary" id="assignBtn">Sort bookmarks into these</button>
       </p>
     </section>
@@ -100,7 +100,7 @@
       <h2>Preview</h2>
       <p id="previewSummary" class="muted"></p>
       <div id="tree"></div>
-      <p style="margin-top:16px">
+      <p class="btn-row">
         <button class="primary" id="applyBtn">Apply</button>
         <button class="ghost" id="cancelBtn">Cancel</button>
       </p>
@@ -109,8 +109,10 @@
     <section id="result" hidden>
       <h2 id="resultTitle"></h2>
       <p id="resultText" class="muted"></p>
-      <button class="danger" id="undoBtn">Undo</button>
-      <button class="primary" id="doneBtn">Done</button>
+      <div class="btn-row">
+        <button class="danger" id="undoBtn">Undo</button>
+        <button class="primary" id="doneBtn">Done</button>
+      </div>
     </section>
 
     <script type="module" src="./app.js"></script>

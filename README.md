@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="public/icons/clean-bookmarks.png" alt="Clean Bookmarks" width="320" />
+  <img src="public/icons/logo.png" alt="Clean Bookmarks" width="320" />
   <p>Organize your browser bookmarks with AI — using your own API key.</p>
 </div>
 

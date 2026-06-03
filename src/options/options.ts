@@ -1,8 +1,10 @@
 import { getSettings, saveSettings } from '../core/storage';
 import { hasHostPermission, requestHostPermission } from '../core/permissions';
 import { PROVIDERS, CUSTOM_PROVIDER, providerForBaseUrl } from '../core/providers';
+import { DEFAULT_TAXONOMY_PROMPT } from '../core/ai/pass1-taxonomy';
+import { focusOrCreate } from '../core/tabs';
 
-// Light/dark theme — shared with the main app via localStorage, default OS.
+// Theme toggle — persisted in localStorage, shared with the main app.
 function applyTheme(theme: 'light' | 'dark') {
   document.documentElement.dataset.theme = theme;
   const btn = document.getElementById('themeToggle');
@@ -17,24 +19,17 @@ document.getElementById('themeToggle')?.addEventListener('click', () =>
   applyTheme(document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark')
 );
 
-document.getElementById('backBtn')?.addEventListener('click', async () => {
-  const appUrl = chrome.runtime.getURL('app.html');
-  const tabs = await chrome.tabs.query({ url: appUrl });
-  if (tabs.length && tabs[0]?.id) {
-    await chrome.tabs.update(tabs[0].id, { active: true });
-  } else {
-    await chrome.tabs.create({ url: appUrl });
-  }
-  window.close();
+document.getElementById('backBtn')?.addEventListener('click', () => {
+  focusOrCreate(chrome.runtime.getURL('app.html'));
 });
 
 const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
-const provider = $<HTMLSelectElement>('provider');
 const baseUrl = $<HTMLInputElement>('baseUrl');
 const editBaseUrl = $<HTMLButtonElement>('editBaseUrl');
 const apiKey = $<HTMLInputElement>('apiKey');
 const modelSelect = $<HTMLSelectElement>('modelSelect');
 const modelCustom = $<HTMLInputElement>('modelCustom');
+const prompt = $<HTMLTextAreaElement>('prompt');
 
 const ALL = [...PROVIDERS, CUSTOM_PROVIDER];
 const CUSTOM_MODEL = '__custom__';
@@ -95,6 +90,7 @@ async function init() {
   baseUrl.value = s.baseUrl;
   apiKey.value = keys[p.id] ?? '';
   fillModels(p.id, s.model);
+  prompt.value = s.taxonomyPrompt || DEFAULT_TAXONOMY_PROMPT;
   lockBaseUrl(p.id !== 'custom');
 }
 
@@ -139,6 +135,7 @@ $('save').addEventListener('click', async () => {
     apiKey: key, // active key for the selected provider
     apiKeys: keys,
     model: chosenModel() || 'gpt-4o-mini',
+    taxonomyPrompt: prompt.value.trim() === DEFAULT_TAXONOMY_PROMPT ? '' : prompt.value.trim(),
   });
   const saved = $('saved');
   saved.hidden = false;

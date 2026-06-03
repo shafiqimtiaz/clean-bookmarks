@@ -2,6 +2,7 @@ import { OrganizeRun } from './run';
 import { estimateCost } from '../core/cost';
 import { getSettings, saveSettings } from '../core/storage';
 import { send, type ApplyResult, type ReadScopeResult } from '../core/messaging';
+import { focusOrCreate } from '../core/tabs';
 import type { Assignment, RunState, Taxonomy } from '../core/types';
 
 const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
@@ -16,7 +17,7 @@ const guard = (fn: () => Promise<void>) => () => {
 const run = new OrganizeRun(onState);
 let taxonomy: Taxonomy = [];
 
-// Light/dark theme — persisted in localStorage, default follows the OS.
+// Theme toggle — persisted in localStorage, default follows the OS.
 function applyTheme(theme: 'light' | 'dark') {
   document.documentElement.dataset.theme = theme;
   $('themeToggle').textContent = theme === 'dark' ? '☀️' : '🌙';
@@ -30,7 +31,7 @@ $('themeToggle').addEventListener('click', () =>
   applyTheme(document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark')
 );
 
-$('settingsBtn').addEventListener('click', () => chrome.runtime.openOptionsPage());
+$('settingsBtn').addEventListener('click', () => focusOrCreate(chrome.runtime.getURL('options.html')));
 
 async function boot() {
   const settings = await getSettings();
@@ -56,14 +57,14 @@ async function showEstimate() {
 $('consentBtn').addEventListener('click', guard(async () => {
   const settings = await getSettings();
   if (!settings.apiKey) {
-    chrome.runtime.openOptionsPage();
+    focusOrCreate(chrome.runtime.getURL('options.html'));
     return;
   }
   await saveSettings({ consentAt: Date.now() });
   await showEstimate();
 }));
 
-$('openSettings').addEventListener('click', () => chrome.runtime.openOptionsPage());
+$('openSettings').addEventListener('click', () => focusOrCreate(chrome.runtime.getURL('options.html')));
 
 $('runBtn').addEventListener('click', guard(async () => {
   show('estimate', false);
