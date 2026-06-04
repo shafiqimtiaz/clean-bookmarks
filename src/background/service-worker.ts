@@ -34,7 +34,7 @@ chrome.runtime.onMessage.addListener((msg: Message, _sender, sendResponse) => {
 async function handle(msg: Message): Promise<unknown> {
   switch (msg.type) {
     case "READ_SCOPE": {
-      const result = await readScope(msg.folderIds);
+      const result = await readScope(msg.excludedFolderNames ?? []);
       return result satisfies ReadScopeResult;
     }
 
@@ -43,10 +43,10 @@ async function handle(msg: Message): Promise<unknown> {
     }
 
     case "APPLY": {
-      // We need the original flat list to know what to move; re-read scope so
-      // the SW stays the single source of truth for bookmark ids.
       try {
-        const { bookmarks, scopeParentIds } = await readScope();
+        const { bookmarks, scopeParentIds } = await readScope(
+          msg.excludedFolderNames ?? [],
+        );
         const snapshot = await snapshotScope(scopeParentIds);
         await saveSnapshot(snapshot);
         const { movedCount, unsortedCount } = await applyOrganization(
@@ -56,8 +56,8 @@ async function handle(msg: Message): Promise<unknown> {
         );
         return { movedCount, unsortedCount, snapshot } satisfies ApplyResult;
       } catch (e: unknown) {
-        const msg = e instanceof Error ? e.message : String(e);
-        console.error("[APPLY]", msg, e);
+        const errMsg = e instanceof Error ? e.message : String(e);
+        console.error("[APPLY]", errMsg, e);
         throw e;
       }
     }
