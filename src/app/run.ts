@@ -11,16 +11,10 @@ import type {
   Taxonomy,
 } from "../core/types";
 
-// Local usage shape surfaced to the progress UI. Matches what the
-// pass1/pass2 functions return: per-call token counts + USD.
 type RunUsage = { input: number; output: number; costUsd: number };
 
 const tokens = (u: RunUsage) => u.input + u.output;
-const usd = (u: RunUsage) => u.costUsd;
 
-// The long-running organize job lives here, in the full-page tab context,
-// so the MV3 service worker's ~30s idle kill never interrupts it. The SW is
-// only asked to read the scope and (later) apply/undo.
 export class OrganizeRun {
   state: RunState = {
     phase: "idle",
@@ -34,6 +28,8 @@ export class OrganizeRun {
   scopeParentIds: string[] = [];
   taxonomy: Taxonomy = [];
   assignments: Assignment[] = [];
+  excludedFolderNames: string[] = [];
+  private lastExclusionSig: string = "";
 
   constructor(private onChange: (s: RunState) => void) {}
 
@@ -42,23 +38,40 @@ export class OrganizeRun {
     this.onChange(this.state);
   }
 
-  // Phase 1: ask the SW to read the scope, then propose a taxonomy.
-  async start(folderIds?: string[]): Promise<Taxonomy> {
+  async start(excludedFolderNames: string[] = []): Promise<Taxonomy> {
+    const sig = [...excludedFolderNames].sort().join("|");
+    if (this.taxonomy.length > 0 && this.lastExclusionSig === sig) {
+      this.set({ phase: "review" });
+      return this.taxonomy;
+    }
+    this.lastExclusionSig = sig;
+    this.excludedFolderNames = excludedFolderNames;
+
     this.set({ phase: "reading" });
-    const read = await send<ReadScopeResult>({ type: "READ_SCOPE", folderIds });
+    const read = await send<ReadScopeResult>({
+      type: "READ_SCOPE",
+      excludedFolderNames,
+    });
     if (!read.ok) return this.fail(read.error);
     this.bookmarks = read.data.bookmarks;
     this.scopeParentIds = read.data.scopeParentIds;
+
+    if (this.bookmarks.length === 0) {
+      return this.fail(
+        "No bookmarks in scope. Uncheck a folder to include its contents.",
+      );
+    }
+
     this.set({ phase: "pass1", total: this.bookmarks.length });
 
     const settings = await getSettings();
     const configSeeds = [...new Set(settings.seedCategories)];
-    const folderHints = [...new Set(read.data.folderNames)];
     const { taxonomy, usage } = await proposeTaxonomy(
       settings,
       this.bookmarks,
       configSeeds,
-      folderHints,
+      read.data.folderNames,
+      excludedFolderNames,
     );
     this.taxonomy = taxonomy;
     this.set({
@@ -68,8 +81,6 @@ export class OrganizeRun {
     return taxonomy;
   }
 
-  // Phase 2: user-edited taxonomy is committed; assign every bookmark.
-  // Resumable + partial-safe: each batch accumulates as it returns.
   async assign(taxonomy: Taxonomy): Promise<Assignment[]> {
     this.taxonomy = taxonomy;
     const settings = await getSettings();
@@ -89,8 +100,7 @@ export class OrganizeRun {
         try {
           const res = await assignBatch(settings, taxonomy, batch);
           return { assignments: res.assignments, tok: tokens(res.usage) };
-        } catch (e) {
-          // Failed batch -> its bookmarks fall through to Unsorted at apply.
+        } catch {
           return { assignments: [] as Assignment[], tok: 0 };
         }
       },
