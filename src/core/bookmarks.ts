@@ -265,9 +265,49 @@ export async function applyOrganization(
     }
 
     await removeEmptyFolders(rootId, createdIds);
+    await sortFolderTree(rootId);
   }
 
   return { movedCount: moved, unsortedCount: unsorted };
+}
+
+// Reorder every folder under `rootId` so children are alphabetical by title,
+// folders before bookmarks, recursing into sub-folders. Front-to-back
+// placement only ever moves a node to an index <= its current one, sidestepping
+// Chrome's off-by-one when moving to a higher index.
+async function sortFolderTree(folderId: string): Promise<void> {
+  let node: chrome.bookmarks.BookmarkTreeNode | undefined;
+  try {
+    [node] = await chrome.bookmarks.getSubTree(folderId);
+  } catch (e) {
+    console.error("[sortFolderTree] getSubTree failed", folderId, e);
+    return;
+  }
+  if (!node) return;
+  const sorted = [...(node.children ?? [])].sort(compareNodes);
+  for (let i = 0; i < sorted.length; i++) {
+    try {
+      await chrome.bookmarks.move(sorted[i]!.id, { parentId: folderId, index: i });
+    } catch (e) {
+      console.error("[sortFolderTree] move failed", sorted[i]!.id, e);
+    }
+  }
+  for (const child of sorted) {
+    if (!child.url) await sortFolderTree(child.id);
+  }
+}
+
+function compareNodes(
+  a: chrome.bookmarks.BookmarkTreeNode,
+  b: chrome.bookmarks.BookmarkTreeNode,
+): number {
+  const aFolder = a.url ? 1 : 0;
+  const bFolder = b.url ? 1 : 0;
+  if (aFolder !== bFolder) return aFolder - bFolder;
+  return (a.title || a.url || "").localeCompare(b.title || b.url || "", undefined, {
+    sensitivity: "base",
+    numeric: true,
+  });
 }
 
 async function moveTo(id: string, parentId: string): Promise<void> {
