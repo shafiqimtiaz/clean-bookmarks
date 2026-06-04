@@ -1,0 +1,61 @@
+name: Publish to Chrome Web Store
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Extension version (e.g. 0.0.0.2)'
+        required: true
+        type: string
+        pattern: '^\d+\.\d+\.\d+(\.\d+)?$'
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    concurrency:
+      group: publish
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Stamp version from tag
+        run: |
+          if [ "${{ github.event_name }}" = "push" ]; then
+            VERSION="${GITHUB_REF_NAME#v}"
+          else
+            VERSION="${{ inputs.version }}"
+          fi
+          echo "Publishing version: $VERSION"
+          jq --arg v "$VERSION" '.version = $v | .version_name = $v' manifest.template.json > tmp.json
+          mv tmp.json manifest.template.json
+
+      - run: npm ci
+
+      - run: npm run build
+
+      - name: Zip dist
+        run: cd dist && zip -r ../extension.zip .
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: extension-zip
+          path: extension.zip
+          retention-days: 14
+
+      - uses: puzzlers-labs/chrome-webstore-publish@v1
+        with:
+          extension_id: ${{ secrets.EXTENSION_ID }}
+          client_id: ${{ secrets.CWS_CLIENT_ID }}
+          client_secret: ${{ secrets.CWS_CLIENT_SECRET }}
+          refresh_token: ${{ secrets.CWS_REFRESH_TOKEN }}
+          zip_file_path: extension.zip
