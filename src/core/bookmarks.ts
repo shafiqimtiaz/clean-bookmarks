@@ -18,14 +18,13 @@ const BOOKMARKS_BAR_ID = "1";
 // categories (the user doesn't lose those groupings); nested sub-folder
 // structure is intentionally discarded. Our own "Organized" folders are
 // skipped so re-runs stay incremental.
-export async function readScope(folderIds?: string[]): Promise<{
+export async function readScope(excludedFolderNames: string[] = []): Promise<{
   bookmarks: FlatBookmark[];
   scopeParentIds: string[];
   folderNames: string[];
 }> {
-  const scopeParentIds = folderIds?.length
-    ? folderIds
-    : [OTHER_BOOKMARKS_ID, BOOKMARKS_BAR_ID];
+  const scopeParentIds = [OTHER_BOOKMARKS_ID, BOOKMARKS_BAR_ID];
+  const excluded = new Set(excludedFolderNames);
 
   const flat: FlatBookmark[] = [];
   const folderNames = new Set<string>();
@@ -53,7 +52,6 @@ export async function readScope(folderIds?: string[]): Promise<{
     try {
       [root] = await chrome.bookmarks.getSubTree(parentId);
     } catch {
-      // Chrome root was deleted — find the replacement by name.
       try {
         const kids = await chrome.bookmarks.getChildren("0");
         const replacement = (kids as chrome.bookmarks.BookmarkTreeNode[]).find(
@@ -62,9 +60,8 @@ export async function readScope(folderIds?: string[]): Promise<{
         if (replacement) {
           effectiveId = replacement.id;
           [root] = await chrome.bookmarks.getSubTree(replacement.id);
-          // Swap the id in scopeParentIds so the rest of the code uses the real id.
-          const idx = scopeParentIds.indexOf(parentId);
-          if (idx !== -1) scopeParentIds[idx] = effectiveId;
+          const i = scopeParentIds.indexOf(parentId);
+          if (i !== -1) scopeParentIds[i] = effectiveId;
           console.warn(
             `[readScope] Replaced stale root ${parentId} → ${effectiveId} ("${replacement.title}")`,
           );
@@ -86,7 +83,11 @@ export async function readScope(folderIds?: string[]): Promise<{
           url: child.url,
           root: effectiveId,
         });
-      } else if (!child.title.startsWith(ORGANIZED_FOLDER_PREFIX)) {
+      } else if (child.title.startsWith(ORGANIZED_FOLDER_PREFIX)) {
+        // skip organized folders
+      } else if (excluded.has(child.title)) {
+        // skip excluded folder and its entire subtree
+      } else {
         folderNames.add(child.title);
         collect(child, effectiveId);
       }
