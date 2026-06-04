@@ -191,14 +191,30 @@ export async function applyOrganization(
   let unsorted = 0;
 
   for (const rootId of [...new Set(bookmarks.map((b) => b.root))]) {
-    const subCount = new Map<string, number>();
+    // Tally each category's direct items vs. its sub-folders so we can drop
+    // sub-folders that add no structure (see keepSub below).
+    const catDirect = new Map<string, number>();
+    const catSubs = new Map<string, Map<string, number>>();
     for (const bm of bookmarks.filter((b) => b.root === rootId)) {
       const a = byIdx.get(bm.idx);
-      if (a?.sub) {
-        const key = `${a.cat}/${a.sub}`;
-        subCount.set(key, (subCount.get(key) ?? 0) + 1);
+      if (!a) continue;
+      if (a.sub) {
+        let subs = catSubs.get(a.cat);
+        if (!subs) catSubs.set(a.cat, (subs = new Map()));
+        subs.set(a.sub, (subs.get(a.sub) ?? 0) + 1);
+      } else {
+        catDirect.set(a.cat, (catDirect.get(a.cat) ?? 0) + 1);
       }
     }
+    // Keep a sub-folder only if it holds 2+ bookmarks AND the category has
+    // more than just that one sub — otherwise the extra level is noise:
+    // a singleton, or a lone sub that simply mirrors its parent.
+    const keepSub = (cat: string, sub: string): boolean => {
+      const subs = catSubs.get(cat);
+      if (!subs || (subs.get(sub) ?? 0) <= 1) return false;
+      if (subs.size === 1 && (catDirect.get(cat) ?? 0) === 0) return false;
+      return true;
+    };
 
     const createdIds = new Set<string>();
     const folderId = new Map<string, string>(); // "cat" or "cat/sub" -> id
@@ -235,12 +251,7 @@ export async function applyOrganization(
         continue;
       }
 
-      if (a) {
-        // Collapse sub-folder when only 1 bookmark maps to it.
-        if (a.sub && (subCount.get(`${a.cat}/${a.sub}`) ?? 0) <= 1) {
-          a.sub = undefined;
-        }
-      }
+      if (a?.sub && !keepSub(a.cat, a.sub)) a.sub = undefined;
       const dest = a
         ? await ensureFolder(a.cat, a.sub)
         : await ensureFolder(UNSORTED_FOLDER);

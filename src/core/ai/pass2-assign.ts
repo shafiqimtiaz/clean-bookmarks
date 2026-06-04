@@ -12,10 +12,10 @@ function system(taxonomy: Taxonomy): string {
   return `Assign every bookmark to the ONE category below that best matches what it is FOR. Judge by intent, not just the website it lives on — a cooking video on YouTube belongs in "cooking", not "video"; a company's careers page belongs in "job-search". Read the title and URL together.
 
 Rules:
-- Use only the categories listed. Never invent, rename, or merge them.
-- When a category lists sub-categories and one clearly fits, set "sub" to it; otherwise leave sub null. Don't worry about small groups — singletons are merged automatically later.
+- Pick a category only from the list below. Copy its name EXACTLY as written — same spelling, case, and hyphens. Never invent, rename, merge, re-case, or pluralize a category.
+- "sub" must be one of the chosen category's own listed children (shown after ">"), copied exactly, or null. Never invent a sub, and never borrow a sub from a different category. If the category lists no children, sub is null. Prefer null — only nest when a listed child clearly fits.
 - Every bookmark must get a category. If none fits well, choose the closest.
-- Clean each title: return a clear, accurate name. Fix blank, numeric, duplicated, or truncated titles using the URL as a guide; keep good titles unchanged.
+- Clean each title into a clear, accurate name. Never add facts not present in the title or URL; keep real product, brand, and site names; drop taglines and marketing copy. Fix blank, numeric, duplicated, or truncated titles using the URL as a guide; leave good titles unchanged.
 - Return exactly one entry per bookmark idx.
 
 Categories:
@@ -36,6 +36,19 @@ export async function assignBatch(
   usage: { input: number; output: number; costUsd: number };
 }> {
   const list = batch.map((b) => `${b.idx}: ${b.title} | ${b.url}`).join("\n");
+
+  // Canonical lookup so the model's strings snap to the exact taxonomy nodes
+  // the user approved — case/spacing variants ("Frontend" vs "frontend") map
+  // to one folder, and unknown categories or subs are rejected rather than
+  // spawning stray folders.
+  const catByLower = new Map<string, string>();
+  const subsByCat = new Map<string, Map<string, string>>();
+  for (const c of taxonomy) {
+    catByLower.set(c.name.trim().toLowerCase(), c.name);
+    const subs = new Map<string, string>();
+    for (const ch of c.children ?? []) subs.set(ch.trim().toLowerCase(), ch);
+    subsByCat.set(c.name, subs);
+  }
 
   const base = `${system(taxonomy)}\n\nRespond with ONLY a single JSON object — no markdown, no code fences, no commentary. It must match this shape exactly:\n${ASSIGNMENTS_HINT}`;
 
@@ -67,17 +80,20 @@ export async function assignBatch(
     const value = parseJson(text, assignmentsSchema);
     if (value !== null) {
       const known = new Set(batch.map((b) => b.idx));
-      return {
-        assignments: value.assignments
-          .filter((a) => known.has(a.idx))
-          .map((a) => ({
-            idx: a.idx,
-            cat: a.cat,
-            sub: a.sub ?? undefined,
-            title: a.title,
-          })),
-        usage,
-      };
+      const seen = new Set<number>();
+      const assignments: Assignment[] = [];
+      for (const a of value.assignments) {
+        if (!known.has(a.idx) || seen.has(a.idx)) continue;
+        const cat = catByLower.get((a.cat ?? "").trim().toLowerCase());
+        if (!cat) continue; // unknown category -> drop -> Unsorted at apply
+        seen.add(a.idx);
+        const sub =
+          a.sub != null
+            ? subsByCat.get(cat)?.get(a.sub.trim().toLowerCase())
+            : undefined;
+        assignments.push({ idx: a.idx, cat, sub, title: a.title });
+      }
+      return { assignments, usage };
     }
   }
   throw new Error(`Model did not return valid JSON: ${lastErr}`);
