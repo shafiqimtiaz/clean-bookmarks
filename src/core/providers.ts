@@ -77,16 +77,24 @@ export function getProviders(): ProviderInfo[] {
 }
 
 export function getProvider(providerId: string): ProviderInfo | null {
-  return (REGISTRY as unknown as Record<string, ProviderInfo>)[providerId] ?? null;
+  return (
+    (REGISTRY as unknown as Record<string, ProviderInfo>)[providerId] ?? null
+  );
 }
 
-export function getModel(providerId: string, modelId: string): SlimModel | null {
+export function getModel(
+  providerId: string,
+  modelId: string,
+): SlimModel | null {
   const p = getProvider(providerId);
   if (!p) return null;
   return p.models.find((m) => m.id === modelId) ?? null;
 }
 
-export function getModelApi(providerId: string, modelId: string): string | null {
+export function getModelApi(
+  providerId: string,
+  modelId: string,
+): string | null {
   return getModel(providerId, modelId)?.api ?? null;
 }
 
@@ -99,7 +107,10 @@ export function getProviderBaseUrl(providerId: string): string | null {
   return getProvider(providerId)?.baseUrl ?? null;
 }
 
-export function providerForBaseUrl(baseUrl: string): { id: string; baseUrl: string } {
+export function providerForBaseUrl(baseUrl: string): {
+  id: string;
+  baseUrl: string;
+} {
   const norm = baseUrl.replace(/\/$/, "");
   const id = KNOWN_BASEURLS[norm] ?? "custom";
   return { id, baseUrl: norm };

@@ -40,9 +40,10 @@ export const ASSIGNMENTS_HINT =
 export const taxonomyTool: Tool = {
   name: "propose_taxonomy",
   description:
-    "Propose a taxonomy of bookmark categories. Each category has a name " +
-    "and an optional list of sub-category names. Names should be 1-2 words, " +
-    "no articles, no special characters.",
+    "Propose a taxonomy of bookmark categories grouped by topic and intent. " +
+    "Each category has a lowercase 1-2 word name (hyphens allowed, no articles, " +
+    "never a website or domain name) and an optional list of sub-category names. " +
+    "Prefer few broad categories; only add sub-categories for a clear, sizable sub-theme.",
   parameters: Type.Object({
     categories: Type.Array(
       Type.Object({

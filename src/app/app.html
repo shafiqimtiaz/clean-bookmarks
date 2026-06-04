@@ -1,144 +1,595 @@
 <!doctype html>
-<html>
+<html lang="en" data-theme="dark">
   <head>
     <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Clean Bookmarks</title>
     <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
-    <div class="head">
-      <h1>Clean Bookmarks</h1>
-      <div style="display: flex; gap: 10px">
-        <button id="settingsBtn" title="Settings">⚙️</button>
-        <button id="themeToggle" title="Toggle light/dark">🌙</button>
-      </div>
-    </div>
+    <div class="page">
+      <!-- TOP BAR -->
+      <header class="topbar">
+        <div class="brand">
+          <span class="logo"
+            ><img
+              src="icons/icon128.png"
+              alt="Clean Bookmarks logo"
+              style="transform: none"
+          /></span>
+          <h1>Clean Bookmarks</h1>
+          <span class="ver" id="version"></span>
+        </div>
+        <div class="actions">
+          <button
+            class="iconbtn"
+            id="settingsBtn"
+            aria-label="Settings"
+            title="Settings"
+          >
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="var(--gear)"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <circle cx="12" cy="12" r="3"></circle>
+              <path
+                d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"
+              ></path>
+            </svg>
+          </button>
+          <button
+            class="iconbtn theme-toggle"
+            id="themeToggle"
+            aria-label="Toggle theme"
+            title="Toggle theme"
+          >
+            <span class="theme-icon"></span>
+          </button>
+        </div>
+      </header>
 
-    <section id="consent" hidden>
-      <h2>Before you start</h2>
-      <p>
-        This organizes the bookmarks in your <b>Other Bookmarks</b> and loose
-        items on your <b>Bookmarks Bar</b>. Their <b>titles and URLs</b> will be
-        sent to the AI endpoint you configured. <b>Nothing else</b> leaves your
-        device. Your bookmarks are moved into a new dated folder, and a
-        one-click <b>Undo</b> is always available.
-      </p>
-      <button class="primary" id="consentBtn">I understand — continue</button>
-      <button class="ghost" id="openSettings">Settings</button>
-    </section>
+      <div class="rule"></div>
 
-    <section id="estimate" hidden>
-      <h2>Estimate</h2>
-      <p id="estimateText" class="muted"></p>
-      <button class="primary" id="runBtn">Analyze bookmarks</button>
-    </section>
+      <!-- PROVIDER / MODEL STATUS -->
+      <section class="status" id="statusStrip" aria-label="Provider status">
+        <span class="monogram" id="statusMark">··</span>
+        <div class="pinfo">
+          <b id="statusProvider">Not configured</b>
+          <span id="statusModel">—</span>
+        </div>
+        <span class="spacer"></span>
+        <span class="pill off" id="statusPill"
+          ><span class="dot"></span>
+          <span id="statusPillText">No key</span></span
+        >
+        <button class="change" id="changeProvider">Change</button>
+      </section>
 
-    <section id="progress" hidden>
-      <h2 id="progressTitle">Working…</h2>
-      <div class="bar"><div id="progressBar"></div></div>
-      <p id="progressText" class="muted"></p>
-    </section>
+      <!-- FIRST-RUN CONSENT -->
+      <section class="card" id="consent" hidden>
+        <div class="card-head">
+          <h2>Before you start</h2>
+        </div>
+        <div class="card-body">
+          <p>
+            This organizes the bookmarks in your <b>Other Bookmarks</b> and on
+            your <b>Bookmarks Bar</b>. Their <b>titles and URLs</b> are sent to
+            the AI endpoint you configured. <b>Nothing else</b> leaves your
+            device. Your bookmarks are moved into folders, and a one-click
+            <b>Undo</b> is always available.
+          </p>
+          <div class="btn-row">
+            <button class="btn-primary" id="consentBtn">
+              I understand — continue
+            </button>
+            <button class="btn-ghost" id="openSettings">Settings</button>
+          </div>
+        </div>
+      </section>
 
-    <section id="review" hidden>
-      <h2>Review categories</h2>
-      <p class="muted">
-        Rename, remove, or add categories. These are what every bookmark gets
-        sorted into.
-      </p>
-      <div id="chips"></div>
-      <div class="btn-row">
-        <input class="add" id="addCat" placeholder="Add a category" />
-        <button class="ghost" id="addCatBtn">Add</button>
-      </div>
-      <p class="btn-row">
-        <button class="primary" id="assignBtn">
-          Sort bookmarks into these
-        </button>
-      </p>
-    </section>
-
-    <section id="preview" hidden>
-      <h2>Preview</h2>
-      <p id="previewSummary" class="muted"></p>
-      <div id="tree"></div>
-      <p class="btn-row">
-        <button class="primary" id="applyBtn">Apply</button>
-        <button class="ghost" id="cancelBtn">Cancel</button>
-      </p>
-    </section>
-
-    <section id="result" hidden>
-      <h2 id="resultTitle"></h2>
-      <p id="resultText" class="muted"></p>
-      <div class="btn-row">
-        <button class="danger" id="undoBtn">Undo</button>
-        <button class="primary" id="doneBtn">Done</button>
-      </div>
-    </section>
-
-    <!-- Settings modal (shown inline via ⚙️ button) -->
-    <div id="settingsPanel" hidden>
-      <div class="settings-backdrop">
-        <div class="settings-modal">
-          <div class="head">
-            <h2>Settings</h2>
-            <div style="display: flex; align-items: center; gap: 12px">
-              <span class="saved" id="saved" hidden>Saved ✓</span>
-              <button id="closeSettings" type="button" title="Close">✕</button>
+      <!-- CURRENT SITUATION -->
+      <section class="card" id="situation" hidden>
+        <div class="card-head">
+          <h2>Current Situation</h2>
+          <span class="sub">What's in your browser right now</span>
+        </div>
+        <div class="sit-body">
+          <div
+            class="bar"
+            id="situationBar"
+            role="img"
+            aria-label="Bookmark composition"
+          >
+            <div class="seg junk" id="segJunk" style="flex: 1">
+              <span class="segnum" id="segJunkNum">0</span>
+              <span class="seglbl">Loose Items</span>
+            </div>
+            <div class="seg org" id="segOrg" style="flex: 1">
+              <span class="segnum" id="segOrgNum">0</span>
+              <span class="seglbl">Inside Folders</span>
             </div>
           </div>
-          <p class="hint" style="margin: 8px 0 0">
-            Bring your own key. Bookmark titles and URLs are sent only to your
-            endpoint. The key is stored locally in your browser and never
-            synced.
+          <div class="legend">
+            <span class="leg"
+              ><span class="sw junk"></span> <b id="legJunk">0</b>&nbsp;loose on
+              the bar / in Other Bookmarks</span
+            >
+            <span class="leg"
+              ><span class="sw org"></span> <b id="legOrg">0</b>&nbsp;inside
+              named folders</span
+            >
+          </div>
+          <p class="muted" style="margin: 14px 0 0; font-size: 11.5px">
+            All of these are reorganized into tidy folders when you run.
           </p>
-          <div class="settings-grid">
-            <div class="settings-left">
-              <label for="provider">Provider</label>
-              <input id="provider" list="providerList" autocomplete="off" placeholder="Search or select…" />
-              <datalist id="providerList"></datalist>
+          <div class="breakdown">
+            <div class="bd">
+              <div class="num" id="bdOther">0</div>
+              <div class="cap">Loose in Other</div>
+            </div>
+            <div class="bd">
+              <div class="num" id="bdBar">0</div>
+              <div class="cap">Loose on Bar</div>
+            </div>
+            <div class="bd">
+              <div class="num" id="bdTotal">0</div>
+              <div class="cap">Total Bookmarks</div>
+            </div>
+          </div>
+          <p class="lastrun" id="lastrun">
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <circle cx="12" cy="12" r="9"></circle>
+              <path d="M12 7v5l3 2"></path>
+            </svg>
+            <span id="lastrunText">No cleanup yet.</span>
+          </p>
+        </div>
+      </section>
 
-              <label for="baseUrl">API base URL</label>
+      <!-- ESTIMATE -->
+      <section class="card" id="estimate" hidden>
+        <div class="card-head">
+          <h2>Estimate</h2>
+          <span class="sub">Other Bookmarks + loose Bookmarks Bar items</span>
+        </div>
+        <div class="stats">
+          <div class="stat">
+            <div class="num" id="estBookmarks">0</div>
+            <div class="cap">Bookmarks</div>
+          </div>
+          <div class="stat">
+            <div class="num"><small>~</small><span id="estCalls">0</span></div>
+            <div class="cap">API Calls</div>
+          </div>
+          <div class="stat">
+            <div class="num"><small>~</small><span id="estTokens">0</span></div>
+            <div class="cap">Tokens</div>
+          </div>
+          <div class="stat cost">
+            <div class="num"><small>≈ $</small><span id="estCost">0</span></div>
+            <div class="cap">Est. Cost</div>
+          </div>
+        </div>
+        <div class="card-foot">
+          <p class="note">
+            Runs two passes on <b id="estModel">your model</b>. Nothing moves
+            until you review the proposed categories.
+          </p>
+          <button class="btn-primary" id="runBtn">
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2.2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <path d="M13 2 3 14h7l-1 8 10-12h-7z"></path>
+            </svg>
+            Analyze Bookmarks
+          </button>
+        </div>
+      </section>
+
+      <!-- PROGRESS -->
+      <section class="card" id="progress" hidden>
+        <div class="card-head">
+          <h2 id="progressTitle">Working…</h2>
+        </div>
+        <div class="card-body">
+          <div class="progress"><div id="progressBar"></div></div>
+          <p class="muted" id="progressText" style="margin: 0"></p>
+        </div>
+      </section>
+
+      <!-- REVIEW -->
+      <section class="card" id="review" hidden>
+        <div class="card-head">
+          <h2>Review categories</h2>
+          <span class="sub"
+            >Rename, remove, or add — these are the folders</span
+          >
+        </div>
+        <div class="card-body">
+          <div id="chips"></div>
+          <div class="btn-row">
+            <input class="add" id="addCat" placeholder="Add a category" />
+            <button class="btn-ghost" id="addCatBtn">Add</button>
+          </div>
+          <div class="btn-row">
+            <button class="btn-primary" id="assignBtn">
+              Sort bookmarks into these
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <!-- PREVIEW -->
+      <section class="card" id="preview" hidden>
+        <div class="card-head">
+          <h2>Preview</h2>
+          <span class="sub">Nothing moves until you hit Apply</span>
+        </div>
+        <div class="card-body">
+          <p class="muted" id="previewSummary"></p>
+          <div id="tree"></div>
+          <div class="btn-row">
+            <button class="btn-ghost" id="cancelBtn">Cancel</button>
+            <button class="btn-primary" id="applyBtn">
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2.2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <path d="M20 6 9 17l-5-5"></path>
+              </svg>
+              Apply
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <!-- RESULT -->
+      <section class="card" id="result" hidden>
+        <div class="card-head">
+          <span class="resicon" id="resultIcon"></span>
+          <h2 id="resultTitle"></h2>
+        </div>
+        <div class="card-body">
+          <p id="resultText"></p>
+          <div class="btn-row">
+            <button class="btn-danger" id="undoBtn">
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <path d="M3 7v6h6"></path>
+                <path d="M3 13a9 9 0 1 0 3-7.7L3 8"></path>
+              </svg>
+              Undo
+            </button>
+            <button class="btn-primary" id="doneBtn">
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2.2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <path d="M20 6 9 17l-5-5"></path>
+              </svg>
+              Done
+            </button>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <!-- ============ SETTINGS PAGE ============ -->
+    <div class="sview" id="settingsView">
+      <header class="sbar">
+        <button class="back" id="backHome">
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2.2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <path d="M19 12H5M12 19l-7-7 7-7"></path>
+          </svg>
+          Clean Bookmarks
+        </button>
+        <h1 class="stitle">Settings</h1>
+        <span class="spacer"></span>
+        <button
+          class="iconbtn theme-toggle"
+          aria-label="Toggle theme"
+          title="Toggle theme"
+        >
+          <span class="theme-icon"></span>
+        </button>
+      </header>
+
+      <div class="sinner">
+        <p class="sintro">
+          Bring your own key. Bookmark titles and URLs are sent
+          <b>only to your endpoint</b>. The key is stored locally in your
+          browser and never synced.
+        </p>
+
+        <!-- CONNECTION -->
+        <section class="section">
+          <div class="section-head">
+            <h2>Connection</h2>
+            <span class="desc"
+              >Where Clean Bookmarks sends titles &amp; URLs</span
+            >
+          </div>
+          <div class="section-body">
+            <div class="field">
+              <span class="label">Provider</span>
+              <div class="search">
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                >
+                  <circle cx="11" cy="11" r="7"></circle>
+                  <path d="m21 21-4.3-4.3"></path>
+                </svg>
+                <input
+                  class="input"
+                  id="provSearch"
+                  placeholder="Search providers…"
+                  aria-label="Search providers"
+                />
+              </div>
+              <div class="grid" id="provGrid"></div>
+            </div>
+
+            <div class="field">
+              <span class="label">API Base URL</span>
               <div class="row">
                 <input
+                  class="input"
                   id="baseUrl"
                   placeholder="https://api.openai.com/v1"
                   disabled
                 />
                 <button
+                  class="mini"
                   id="editBaseUrl"
-                  class="icon-btn"
-                  type="button"
-                  title="Edit base URL"
+                  aria-label="Edit base URL"
+                  title="Edit URL"
                 >
-                  ✏️
+                  <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  >
+                    <path d="M12 20h9"></path>
+                    <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"></path>
+                  </svg>
                 </button>
               </div>
-              <div class="hint">
+              <p class="help">
                 Auto-filled by provider. Click the pencil to edit.
-              </div>
+              </p>
+            </div>
 
-              <label for="apiKey">API key</label>
-              <input id="apiKey" type="password" placeholder="sk-…" />
+            <div class="field">
+              <span class="label">Model</span>
+              <select
+                class="input"
+                id="modelSelect"
+                aria-label="Model"
+              ></select>
+              <input
+                class="input"
+                id="modelCustom"
+                autocomplete="off"
+                placeholder="Type model id (e.g. gpt-4o-mini)"
+                aria-label="Custom model id"
+                hidden
+                style="margin-top: 8px"
+              />
+              <p class="help">The model used for both taxonomy passes.</p>
+            </div>
 
-              <label for="modelSelect">Model</label>
-              <input id="modelSelect" list="modelList" autocomplete="off" placeholder="Search or type…" />
-              <datalist id="modelList"></datalist>
-
-              <div class="btn-row">
-                <button id="saveSettings" class="primary">Save</button>
+            <div class="field">
+              <span class="label">API Key</span>
+              <div class="keywrap">
+                <input
+                  class="input"
+                  id="apiKey"
+                  type="password"
+                  placeholder="sk-…"
+                  aria-label="API key"
+                />
+                <button
+                  class="eye"
+                  id="toggleKey"
+                  aria-label="Show key"
+                  title="Show / hide key"
+                >
+                  <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  >
+                    <path
+                      d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z"
+                    ></path>
+                    <circle cx="12" cy="12" r="3"></circle>
+                  </svg>
+                </button>
               </div>
             </div>
-            <div class="settings-right">
-              <label for="prompt"
-                >Taxonomy prompt
-                <span class="hint" style="display: inline"
-                  >(how AI proposes categories)</span
-                ></label
-              >
-              <textarea id="prompt" rows="4"></textarea>
+
+            <div class="testrow">
+              <button class="btn-test" id="testBtn">
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                  <path d="m22 4-10 10.01-3-3"></path>
+                </svg>
+                Test Connection
+              </button>
+              <span class="teststatus" id="testStatus"></span>
             </div>
           </div>
+        </section>
+
+        <!-- CATEGORIZATION -->
+        <section class="section">
+          <div class="section-head">
+            <h2>Categorization</h2>
+            <span class="desc">How the AI proposes your category tree</span>
+            <button class="reset" id="resetTax">Reset to default</button>
+          </div>
+          <div class="section-body">
+            <div class="taxhead">
+              <span class="label">Taxonomy Prompt</span>
+              <span class="hint"
+                >Pass 1 · controls the proposed categories</span
+              >
+            </div>
+            <textarea class="input" id="prompt" spellcheck="false"></textarea>
+          </div>
+        </section>
+
+        <!-- PRIVACY & DATA -->
+        <section class="section">
+          <div class="section-head">
+            <h2>Privacy &amp; Data</h2>
+            <span class="desc"
+              >Nothing leaves your device except what you see below</span
+            >
+          </div>
+          <div class="section-body">
+            <div class="privlist">
+              <span class="priv">
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2.2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <path d="M20 6 9 17l-5-5"></path>
+                </svg>
+                <span
+                  ><b>Local-first.</b> No backend, no telemetry, no analytics.
+                  Your bookmarks stay in your browser.</span
+                >
+              </span>
+              <span class="priv">
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2.2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <path d="M20 6 9 17l-5-5"></path>
+                </svg>
+                <span
+                  ><b>Minimal payload.</b> Only bookmark titles and URLs are
+                  sent to your endpoint — nothing else.</span
+                >
+              </span>
+              <span class="priv">
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2.2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <path d="M20 6 9 17l-5-5"></path>
+                </svg>
+                <span
+                  ><b>Scoped permissions.</b> Access to your provider's origin
+                  is granted per-origin on first use — never silently.</span
+                >
+              </span>
+            </div>
+            <div class="privdiv"></div>
+            <button class="btn-danger" id="clearKey">
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <path
+                  d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"
+                ></path>
+              </svg>
+              Clear Stored Key
+            </button>
+          </div>
+        </section>
+
+        <div class="savebar">
+          <button class="btn-save" id="saveSettings">
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2.2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <path
+                d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"
+              ></path>
+              <path d="M17 21v-8H7v8M7 3v5h8"></path>
+            </svg>
+            Save Changes
+          </button>
+          <button class="btn-ghost" id="cancelSettings">Cancel</button>
+          <span class="savednote" id="saved" hidden>Saved ✓</span>
         </div>
       </div>
     </div>

@@ -40,6 +40,7 @@ export interface Settings {
   seedCategories: string[]; // optional user-seeded categories (pass 1 respects)
   taxonomyPrompt: string; // custom prompt for category generation (empty = use default)
   consentAt: number | null; // epoch ms of first-run consent, null = not given
+  lastCleanupAt: number | null; // epoch ms of last successful apply, null = never
 }
 
 // Snapshot of the bookmark subtree we touched, for one-shot undo.

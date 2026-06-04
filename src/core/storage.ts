@@ -4,7 +4,8 @@ import { getProvider, providerForBaseUrl } from "./providers";
 const DEFAULT_PROVIDER_ID = "minimax";
 const DEFAULT_MODEL_ID = "MiniMax-M3";
 const DEFAULT_BASE_URL =
-  getProvider(DEFAULT_PROVIDER_ID)?.baseUrl ?? "https://api.minimax.io/anthropic";
+  getProvider(DEFAULT_PROVIDER_ID)?.baseUrl ??
+  "https://api.minimax.io/anthropic";
 
 const DEFAULT_SETTINGS: Settings = {
   provider: DEFAULT_PROVIDER_ID,
@@ -15,6 +16,7 @@ const DEFAULT_SETTINGS: Settings = {
   seedCategories: [],
   taxonomyPrompt: "",
   consentAt: null,
+  lastCleanupAt: null,
 };
 
 // One-shot migration from the pre-pi-ai settings shape (top-level baseUrl +

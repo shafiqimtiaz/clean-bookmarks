@@ -1,5 +1,6 @@
 import {
   applyOrganization,
+  countScope,
   readScope,
   restoreSnapshot,
   snapshotScope,
@@ -8,6 +9,7 @@ import { clearSnapshot, getSnapshot, saveSnapshot } from "../core/storage";
 import { focusOrCreate } from "../core/tabs";
 import type {
   ApplyResult,
+  CountScopeResult,
   Message,
   ReadScopeResult,
   Response,
@@ -34,6 +36,10 @@ async function handle(msg: Message): Promise<unknown> {
     case "READ_SCOPE": {
       const result = await readScope(msg.folderIds);
       return result satisfies ReadScopeResult;
+    }
+
+    case "COUNT_SCOPE": {
+      return (await countScope()) satisfies CountScopeResult;
     }
 
     case "APPLY": {

@@ -54,7 +54,9 @@ export function flattenTextContent(
   blocks: ReadonlyArray<{ type: string; text?: string; thinking?: string }>,
 ): string {
   return blocks
-    .map((b) => (b.type === "text" ? b.text : b.type === "thinking" ? b.thinking : ""))
+    .map((b) =>
+      b.type === "text" ? b.text : b.type === "thinking" ? b.thinking : "",
+    )
     .filter(Boolean)
     .join("\n");
 }

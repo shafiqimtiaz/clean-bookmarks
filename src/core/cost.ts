@@ -43,8 +43,8 @@ export function estimateCost(
 
   const p = pricingFor(settings);
   // pi-ai's cost.in/out are per 1M tokens.
-  const usd = (promptTokens / 1_000_000) * p.in +
-    (completionTokens / 1_000_000) * p.out;
+  const usd =
+    (promptTokens / 1_000_000) * p.in + (completionTokens / 1_000_000) * p.out;
   return { calls, promptTokens, completionTokens, usd: round(usd) };
 }
 

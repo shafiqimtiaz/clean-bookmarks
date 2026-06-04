@@ -9,9 +9,16 @@ function system(taxonomy: Taxonomy): string {
       c.children?.length ? `${c.name} > [${c.children.join(", ")}]` : c.name,
     )
     .join("\n");
-  return `Assign each bookmark to exactly one category. Only use sub when 2+ bookmarks share it — otherwise leave sub null. A folder with 1 item is noise. Never invent categories. Also, fix all bookmark names (title) - there should be NO incorrect, blank, or ambiguous bookmark names. Return one entry per bookmark idx.
+  return `Assign every bookmark to the ONE category below that best matches what it is FOR. Judge by intent, not just the website it lives on — a cooking video on YouTube belongs in "cooking", not "video"; a company's careers page belongs in "job-search". Read the title and URL together.
 
-Taxonomy:
+Rules:
+- Use only the categories listed. Never invent, rename, or merge them.
+- When a category lists sub-categories and one clearly fits, set "sub" to it; otherwise leave sub null. Don't worry about small groups — singletons are merged automatically later.
+- Every bookmark must get a category. If none fits well, choose the closest.
+- Clean each title: return a clear, accurate name. Fix blank, numeric, duplicated, or truncated titles using the URL as a guide; keep good titles unchanged.
+- Return exactly one entry per bookmark idx.
+
+Categories:
 ${cats}`;
 }
 
@@ -24,7 +31,10 @@ export async function assignBatch(
   settings: Settings,
   taxonomy: Taxonomy,
   batch: FlatBookmark[],
-): Promise<{ assignments: Assignment[]; usage: { input: number; output: number; costUsd: number } }> {
+): Promise<{
+  assignments: Assignment[];
+  usage: { input: number; output: number; costUsd: number };
+}> {
   const list = batch.map((b) => `${b.idx}: ${b.title} | ${b.url}`).join("\n");
 
   const base = `${system(taxonomy)}\n\nRespond with ONLY a single JSON object — no markdown, no code fences, no commentary. It must match this shape exactly:\n${ASSIGNMENTS_HINT}`;

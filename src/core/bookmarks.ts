@@ -18,9 +18,7 @@ const BOOKMARKS_BAR_ID = "1";
 // categories (the user doesn't lose those groupings); nested sub-folder
 // structure is intentionally discarded. Our own "Organized" folders are
 // skipped so re-runs stay incremental.
-export async function readScope(
-  folderIds?: string[],
-): Promise<{
+export async function readScope(folderIds?: string[]): Promise<{
   bookmarks: FlatBookmark[];
   scopeParentIds: string[];
   folderNames: string[];
@@ -96,6 +94,52 @@ export async function readScope(
   }
 
   return { bookmarks: flat, scopeParentIds, folderNames: [...folderNames] };
+}
+
+// Lightweight count of the in-scope bookmarks, split by where they live now.
+// Loose = direct URL children of a root; foldered = anything inside a named
+// (non-Organized) folder. Mirrors readScope's traversal so the totals match.
+export async function countScope(): Promise<{
+  looseBar: number;
+  looseOther: number;
+  foldered: number;
+  total: number;
+}> {
+  let looseBar = 0;
+  let looseOther = 0;
+  let foldered = 0;
+
+  const countFoldered = (node: chrome.bookmarks.BookmarkTreeNode) => {
+    for (const child of node.children ?? []) {
+      if (child.url) foldered++;
+      else if (!child.title.startsWith(ORGANIZED_FOLDER_PREFIX))
+        countFoldered(child);
+    }
+  };
+
+  for (const parentId of [BOOKMARKS_BAR_ID, OTHER_BOOKMARKS_ID]) {
+    let root: chrome.bookmarks.BookmarkTreeNode | undefined;
+    try {
+      [root] = await chrome.bookmarks.getSubTree(parentId);
+    } catch {
+      continue;
+    }
+    for (const child of root?.children ?? []) {
+      if (child.url) {
+        if (parentId === BOOKMARKS_BAR_ID) looseBar++;
+        else looseOther++;
+      } else if (!child.title.startsWith(ORGANIZED_FOLDER_PREFIX)) {
+        countFoldered(child);
+      }
+    }
+  }
+
+  return {
+    looseBar,
+    looseOther,
+    foldered,
+    total: looseBar + looseOther + foldered,
+  };
 }
 
 // Snapshot the current scope so a single "Undo" can restore it.
