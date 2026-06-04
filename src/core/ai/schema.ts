@@ -41,7 +41,7 @@ export const taxonomyTool: Tool = {
   name: "propose_taxonomy",
   description:
     "Propose a taxonomy of bookmark categories grouped by topic and intent. " +
-    "Each category has a lowercase 1-2 word name (hyphens allowed, no articles, " +
+    "Each category has a lowercase single-word name (no hyphens, no articles, " +
     "never a website or domain name) and an optional list of sub-category names. " +
     "Prefer few broad categories; only add sub-categories for a clear, sizable sub-theme.",
   parameters: Type.Object({

@@ -7,7 +7,7 @@ const SYSTEM = `Propose 8–12 topic categories that capture what each bookmark 
 Intent over source: a cooking tutorial on YouTube → "cooking"; a React repo on GitHub → "frontend". Read past the domain.
 
 Rules:
-- Names: 1–2 words, lowercase, hyphens ok (e.g. "side-projects", "job-search"). No caps, no articles.
+- Names: 1 word, lowercase, no hyphens (e.g. "projects", "jobs", "frontend"). No caps, no articles.
 - Merge aggressively — fewer broad categories beats many narrow ones.
 - Sub-categories: avoid. Only add children when 10+ bookmarks clearly share a tight sub-theme with no better parent. Default is zero children.
 - Never name a category after a website, domain, or bookmark title.`;
