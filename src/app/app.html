@@ -202,6 +202,21 @@
         </div>
       </section>
 
+      <!-- FOLDERS IN SCOPE -->
+      <section class="card" id="folderScope" hidden>
+        <div class="card-head">
+          <h2>Folders in scope</h2>
+          <span class="sub">Untick any folder to exclude it from this run</span>
+        </div>
+        <div class="card-body">
+          <p class="muted" style="margin-bottom: 12px; font-size: 12.5px">
+            Unticked folders and everything inside them are left completely untouched.
+          </p>
+          <ul class="scope-list" id="scopeList"></ul>
+          <p class="muted" style="font-size: 11.5px">Auto-saved.</p>
+        </div>
+      </section>
+
       <!-- PROGRESS -->
       <section class="card" id="progress" hidden>
         <div class="card-head">
@@ -228,6 +243,7 @@
             <button class="btn-ghost" id="addCatBtn">Add</button>
           </div>
           <div class="btn-row">
+            <button class="btn-ghost" id="reviewBackBtn">← Back</button>
             <button class="btn-primary" id="assignBtn">
               Sort bookmarks into these
             </button>
@@ -245,7 +261,7 @@
           <p class="muted" id="previewSummary"></p>
           <div id="tree"></div>
           <div class="btn-row">
-            <button class="btn-ghost" id="cancelBtn">Cancel</button>
+            <button class="btn-ghost" id="previewBackBtn">← Back</button>
             <button class="btn-primary" id="applyBtn">
               <svg
                 viewBox="0 0 24 24"
