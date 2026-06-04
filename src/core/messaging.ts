@@ -3,9 +3,9 @@ import type { FlatBookmark, Snapshot, Taxonomy, Assignment } from "./types";
 // Typed message protocol between the full-page tab / popup and the
 // service worker. The SW is the only context that touches chrome.bookmarks.
 export type Message =
-  | { type: "READ_SCOPE"; folderIds?: string[] } // default scope = junk drawer
+  | { type: "READ_SCOPE"; excludedFolderNames?: string[] } // default scope = junk drawer
   | { type: "COUNT_SCOPE" } // lightweight composition counts for the home card
-  | { type: "APPLY"; taxonomy: Taxonomy; assignments: Assignment[] }
+  | { type: "APPLY"; taxonomy: Taxonomy; assignments: Assignment[]; excludedFolderNames?: string[] }
   | { type: "UNDO" }
   | { type: "HAS_SNAPSHOT" };
 
