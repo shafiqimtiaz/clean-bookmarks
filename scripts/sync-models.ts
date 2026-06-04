@@ -1,7 +1,9 @@
 import { mkdirSync, readFileSync, writeFileSync, existsSync } from "node:fs";
 import { dirname, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
 
-const PROJECT_ROOT = resolve(import.meta.dir, "..");
+const __dirname = dirname(fileURLToPath(import.meta.url));
+const PROJECT_ROOT = resolve(__dirname, "..");
 const SOURCE = resolve(
   PROJECT_ROOT,
   "node_modules/@earendil-works/pi-ai/dist/models.generated.js",

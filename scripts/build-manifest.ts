@@ -1,8 +1,10 @@
 import { readFileSync, writeFileSync } from "node:fs";
-import { resolve } from "node:path";
+import { dirname, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
 import { SUPPORTED_APIS } from "../src/core/providers";
 
-const PROJECT_ROOT = resolve(import.meta.dir, "..");
+const __dirname = dirname(fileURLToPath(import.meta.url));
+const PROJECT_ROOT = resolve(__dirname, "..");
 const TEMPLATE = resolve(PROJECT_ROOT, "manifest.template.json");
 const OUT = resolve(PROJECT_ROOT, "manifest.json");
 const MODELS_JSON = resolve(PROJECT_ROOT, "src/core/ai/models.json");

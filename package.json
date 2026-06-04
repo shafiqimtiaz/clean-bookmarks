@@ -1,21 +1,23 @@
 {
   "name": "clean-bookmarks",
-  "module": "index.ts",
   "type": "module",
   "private": true,
+  "engines": {
+    "node": ">=18"
+  },
   "scripts": {
-    "sync-models": "bun run scripts/sync-models.ts",
-    "build-manifest": "bun run scripts/build-manifest.ts",
-    "prebuild": "bun run sync-models && bun run build-manifest",
-    "build": "bun build.ts",
-    "typecheck": "bunx tsc --noEmit",
-    "test": "bun test"
+    "sync-models": "tsx scripts/sync-models.ts",
+    "build-manifest": "tsx scripts/build-manifest.ts",
+    "prebuild": "npm run sync-models && npm run build-manifest",
+    "build": "tsx build.ts",
+    "typecheck": "tsc --noEmit"
   },
   "devDependencies": {
-    "@types/bun": "latest",
-    "@types/chrome": "latest"
-  },
-  "peerDependencies": {
+    "@types/chrome": "latest",
+    "@types/node": "latest",
+    "esbuild": "^0.24.0",
+    "sharp": "^0.33.0",
+    "tsx": "^4.19.0",
     "typescript": "^5"
   },
   "dependencies": {
