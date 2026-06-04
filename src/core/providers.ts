@@ -32,7 +32,7 @@ export interface ProviderInfo {
 
 // Browser extension runtime supports a subset of pi-ai's APIs. Bedrock,
 // Vertex AI, and Azure are excluded (need cloud credentials we can't BYOK).
-const SUPPORTED_APIS = new Set([
+export const SUPPORTED_APIS = new Set([
   "openai-completions",
   "openai-responses",
   "anthropic-messages",

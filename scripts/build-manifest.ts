@@ -7,6 +7,7 @@
 
 import { readFileSync, writeFileSync } from "node:fs";
 import { resolve } from "node:path";
+import { SUPPORTED_APIS } from "../src/core/providers";
 
 const PROJECT_ROOT = resolve(import.meta.dir, "..");
 const TEMPLATE = resolve(PROJECT_ROOT, "manifest.template.json");
@@ -16,7 +17,7 @@ const MODELS_JSON = resolve(PROJECT_ROOT, "src/core/ai/models.json");
 interface SlimProvider {
   id: string;
   baseUrl: string;
-  models: unknown[];
+  models: { api: string }[];
 }
 
 const providers = Object.values(
@@ -25,6 +26,11 @@ const providers = Object.values(
 
 const origins = new Set<string>();
 for (const p of providers) {
+  // Skip providers whose every model uses an API the browser runtime
+  // can't load (Bedrock, Vertex, Azure, Cloudflare Workers AI, ...).
+  // The Settings UI hides these via isModelSupported, so listing their
+  // origins in optional_host_permissions is dead weight at install time.
+  if (!p.models.some((m) => SUPPORTED_APIS.has(m.api))) continue;
   try {
     const u = new URL(p.baseUrl);
     origins.add(`${u.protocol}//${u.host}/*`);
