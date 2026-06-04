@@ -16,6 +16,7 @@ import {
 } from "../core/providers";
 import { complete } from "../core/ai/provider";
 import { DEFAULT_TAXONOMY_PROMPT } from "../core/ai/pass1-taxonomy";
+import { UNSORTED_FOLDER } from "../core/types";
 import type { Assignment, RunState, Settings, Taxonomy } from "../core/types";
 
 const $ = <T extends HTMLElement>(id: string) =>
@@ -172,29 +173,25 @@ async function showHome() {
 
 function renderFolderScope(names: string[], excluded: string[]) {
   const excludedSet = new Set(excluded);
-  const list = $("scopeList");
-  list.innerHTML = "";
+  const container = $("scopeList");
+  container.innerHTML = "";
   for (const name of names) {
-    const li = document.createElement("li");
-    const cb = document.createElement("input") as HTMLInputElement;
-    cb.type = "checkbox";
-    cb.id = `scope-${name}`;
-    cb.checked = !excludedSet.has(name);
-    cb.addEventListener("change", async () => {
+    const btn = document.createElement("button");
+    btn.className = "scope-badge" + (excludedSet.has(name) ? "" : " selected");
+    btn.textContent = name;
+    btn.addEventListener("click", async () => {
       const s = await getSettings();
       const next = new Set(s.excludedFolders);
-      if (cb.checked) {
+      if (next.has(name)) {
         next.delete(name);
+        btn.classList.add("selected");
       } else {
         next.add(name);
+        btn.classList.remove("selected");
       }
       await saveSettings({ excludedFolders: [...next] });
     });
-    const lbl = document.createElement("label");
-    lbl.htmlFor = `scope-${name}`;
-    lbl.textContent = name;
-    li.append(cb, lbl);
-    list.appendChild(li);
+    container.appendChild(btn);
   }
 }
 
@@ -290,6 +287,17 @@ $("assignBtn").addEventListener(
   }),
 );
 
+$("scopeSelectAll").addEventListener("click", async () => {
+  await saveSettings({ excludedFolders: [] });
+  renderFolderScope(folderNames, []);
+});
+
+$("scopeUnselectAll").addEventListener("click", async () => {
+  const all = [...folderNames];
+  await saveSettings({ excludedFolders: all });
+  renderFolderScope(folderNames, all);
+});
+
 $("reviewBackBtn").addEventListener("click", () => {
   show("review", false);
   show("situation");
@@ -309,6 +317,7 @@ $("applyBtn").addEventListener(
     show("preview", false);
     show("progress");
     $("progressTitle").textContent = "Applying…";
+    setProgress(false, "Reorganizing your bookmarks…");
     const res = await send<ApplyResult>({
       type: "APPLY",
       taxonomy,
@@ -371,28 +380,115 @@ function renderChips() {
 
 function renderPreview(assignments: Assignment[]) {
   const counts = new Map<string, number>();
+  const members = new Map<string, string[]>(); // folder -> bookmark titles
   for (const a of assignments) {
     const key = a.sub ? `${a.cat} / ${a.sub}` : a.cat;
     counts.set(key, (counts.get(key) ?? 0) + 1);
+    let list = members.get(key);
+    if (!list) members.set(key, (list = []));
+    list.push(a.title);
   }
-  const unsorted = run.bookmarks.length - assignments.length;
+  const assignedIdx = new Set(assignments.map((a) => a.idx));
+  const unsortedTitles = run.bookmarks
+    .filter((b) => !assignedIdx.has(b.idx))
+    .map((b) => b.title || b.url);
+
   $("previewSummary").textContent =
-    `${assignments.length} sorted into ${counts.size} folders · ${unsorted} unsorted.`;
+    `${assignments.length} sorted into ${counts.size} folders · ${unsortedTitles.length} unsorted.`;
+
   const ul = document.createElement("ul");
   ul.className = "tree";
-  for (const [name, n] of [...counts].sort((a, b) => b[1] - a[1])) {
+  const addRow = (name: string, titles: string[]) => {
     const li = document.createElement("li");
-    li.innerHTML = `${name} <span class="count">(${n})</span>`;
+    const cnt = document.createElement("span");
+    cnt.className = "count";
+    cnt.textContent = `(${titles.length})`;
+    li.append(document.createTextNode(name + " "), cnt);
+    attachPreviewPopup(li, name, titles);
     ul.appendChild(li);
-  }
-  if (unsorted) {
-    const li = document.createElement("li");
-    li.innerHTML = `Unsorted <span class="count">(${unsorted})</span>`;
-    ul.appendChild(li);
-  }
+  };
+  for (const [name] of [...counts].sort((a, b) => b[1] - a[1]))
+    addRow(name, members.get(name) ?? []);
+  if (unsortedTitles.length) addRow(UNSORTED_FOLDER, unsortedTitles);
+
   const tree = $("tree");
   tree.innerHTML = "";
   tree.appendChild(ul);
+}
+
+// ── Preview hover popup (portal) ───────────────────────────────
+// Lives on <body> so the card's overflow can't clip it. A short hide delay
+// bridges the gap between row and popup so the popup stays open when the
+// cursor moves onto it — needed to scroll long lists.
+let previewPopup: HTMLElement | null = null;
+let popupHideTimer: number | undefined;
+
+function getPreviewPopup(): HTMLElement {
+  if (previewPopup) return previewPopup;
+  const el = document.createElement("div");
+  el.className = "tree-pop";
+  el.hidden = true;
+  el.addEventListener("mouseenter", () => window.clearTimeout(popupHideTimer));
+  el.addEventListener("mouseleave", scheduleHidePopup);
+  document.body.appendChild(el);
+  return (previewPopup = el);
+}
+
+function scheduleHidePopup() {
+  popupHideTimer = window.setTimeout(() => {
+    if (previewPopup) previewPopup.hidden = true;
+  }, 120);
+}
+
+// Place below the row, flipping above / clamping to the viewport on overflow.
+function positionPopup(pop: HTMLElement, anchor: HTMLElement) {
+  pop.style.left = "0px";
+  pop.style.top = "0px";
+  pop.hidden = false;
+  const a = anchor.getBoundingClientRect();
+  const p = pop.getBoundingClientRect();
+  const pad = 8;
+  let left = Math.min(a.left, window.innerWidth - pad - p.width);
+  if (left < pad) left = pad;
+  let top = a.bottom + 6;
+  if (top + p.height > window.innerHeight - pad) top = a.top - p.height - 6;
+  if (top < pad) top = pad;
+  pop.style.left = `${left}px`;
+  pop.style.top = `${top}px`;
+}
+
+function attachPreviewPopup(li: HTMLElement, name: string, titles: string[]) {
+  li.addEventListener("mouseenter", () => {
+    window.clearTimeout(popupHideTimer);
+    const pop = getPreviewPopup();
+    const head = document.createElement("div");
+    head.className = "tree-pop-head";
+    head.textContent = `${name} · ${titles.length}`;
+    const list = document.createElement("div");
+    list.className = "tree-pop-list";
+    for (const t of titles) {
+      const row = document.createElement("div");
+      row.className = "tree-pop-row";
+      row.textContent = t || "(untitled)";
+      row.title = t;
+      list.appendChild(row);
+    }
+    pop.replaceChildren(head, list);
+    positionPopup(pop, li);
+  });
+  li.addEventListener("mouseleave", scheduleHidePopup);
+}
+
+// Determinate phases (pass2) update the bar per batch with real token counts.
+// Opaque phases (reading/pass1/applying) are single AI calls with no
+// mid-flight signal — a fake fixed % and a "~0 tokens" readout are misleading,
+// so those run an indeterminate bar with a meaningful count-based label.
+function setProgress(determinate: boolean, text: string, pct = 0) {
+  const bar = $("progressBar") as HTMLElement;
+  const wrap = bar.parentElement as HTMLElement;
+  wrap.classList.toggle("indeterminate", !determinate);
+  bar.style.width = determinate ? `${pct}%` : "";
+  $("progressText").textContent = text;
 }
 
 function onState(s: RunState) {
@@ -404,16 +500,21 @@ function onState(s: RunState) {
     applying: "Applying…",
   };
   $("progressTitle").textContent = titles[s.phase] ?? "Working…";
-  const pct = s.batchesTotal
-    ? (s.batchesDone / s.batchesTotal) * 100
-    : s.phase === "pass1"
-      ? 30
-      : 5;
-  ($("progressBar") as HTMLElement).style.width = `${pct}%`;
-  $("progressText").textContent =
-    s.phase === "pass2"
-      ? `batch ${s.batchesDone}/${s.batchesTotal} · ${s.done}/${s.total} sorted · ~${s.spentTokens} tokens`
-      : `~${s.spentTokens} tokens used`;
+
+  if (s.batchesTotal > 0) {
+    setProgress(
+      true,
+      `batch ${s.batchesDone}/${s.batchesTotal} · ${s.done}/${s.total} sorted · ~${fmtTokens(s.spentTokens)} tokens`,
+      (s.batchesDone / s.batchesTotal) * 100,
+    );
+  } else {
+    setProgress(
+      false,
+      s.phase === "pass1"
+        ? `Analyzing ${s.total} bookmarks…`
+        : "Reading your bookmarks…",
+    );
+  }
 }
 
 function fail(error: string) {

@@ -19,7 +19,7 @@ export interface Category {
 export type Taxonomy = Category[];
 
 // AI assignment: which bookmark idx lands in which category path.
-// `sub` is optional (level 2). Missing assignments -> "Unsorted".
+// `sub` is optional (level 2). Missing assignments -> "unsorted".
 export interface Assignment {
   idx: number;
   cat: string;
@@ -80,8 +80,7 @@ export interface RunState {
   error?: string;
 }
 
-export const ORGANIZED_FOLDER_PREFIX = "📁 Organized";
-export const UNSORTED_FOLDER = "Unsorted";
+export const UNSORTED_FOLDER = "unsorted";
 export const STORAGE_KEYS = {
   settings: "cb.settings",
   snapshot: "cb.snapshot",

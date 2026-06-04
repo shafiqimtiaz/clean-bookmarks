@@ -1,5 +1,4 @@
 import {
-  ORGANIZED_FOLDER_PREFIX,
   UNSORTED_FOLDER,
   type Assignment,
   type FlatBookmark,
@@ -16,8 +15,7 @@ const BOOKMARKS_BAR_ID = "1";
 // of the user's top-level folders are all flattened and re-sorted. The user's
 // top-level folder NAMES are returned as `folderNames` so they survive as
 // categories (the user doesn't lose those groupings); nested sub-folder
-// structure is intentionally discarded. Our own "Organized" folders are
-// skipped so re-runs stay incremental.
+// structure is intentionally discarded.
 export async function readScope(excludedFolderNames: string[] = []): Promise<{
   bookmarks: FlatBookmark[];
   scopeParentIds: string[];
@@ -40,7 +38,7 @@ export async function readScope(excludedFolderNames: string[] = []): Promise<{
           url: child.url,
           root,
         });
-      } else if (!child.title.startsWith(ORGANIZED_FOLDER_PREFIX)) {
+      } else {
         collect(child, root);
       }
     }
@@ -83,8 +81,6 @@ export async function readScope(excludedFolderNames: string[] = []): Promise<{
           url: child.url,
           root: effectiveId,
         });
-      } else if (child.title.startsWith(ORGANIZED_FOLDER_PREFIX)) {
-        // skip organized folders
       } else if (excluded.has(child.title)) {
         // skip excluded folder and its entire subtree
       } else {
@@ -99,7 +95,7 @@ export async function readScope(excludedFolderNames: string[] = []): Promise<{
 
 // Lightweight count of the in-scope bookmarks, split by where they live now.
 // Loose = direct URL children of a root; foldered = anything inside a named
-// (non-Organized) folder. Mirrors readScope's traversal so the totals match.
+// folder. Mirrors readScope's traversal so the totals match.
 export async function countScope(): Promise<{
   looseBar: number;
   looseOther: number;
@@ -113,8 +109,7 @@ export async function countScope(): Promise<{
   const countFoldered = (node: chrome.bookmarks.BookmarkTreeNode) => {
     for (const child of node.children ?? []) {
       if (child.url) foldered++;
-      else if (!child.title.startsWith(ORGANIZED_FOLDER_PREFIX))
-        countFoldered(child);
+      else countFoldered(child);
     }
   };
 
@@ -129,7 +124,7 @@ export async function countScope(): Promise<{
       if (child.url) {
         if (parentId === BOOKMARKS_BAR_ID) looseBar++;
         else looseOther++;
-      } else if (!child.title.startsWith(ORGANIZED_FOLDER_PREFIX)) {
+      } else {
         countFoldered(child);
       }
     }
@@ -186,7 +181,9 @@ export async function applyOrganization(
   _taxonomy: Taxonomy,
   assignments: Assignment[],
   bookmarks: FlatBookmark[],
+  excludedFolderNames: string[] = [],
 ): Promise<{ movedCount: number; unsortedCount: number }> {
+  const excludedNames = new Set(excludedFolderNames);
   const byIdx = new Map(assignments.map((a) => [a.idx, a]));
   let moved = 0;
   let unsorted = 0;
@@ -266,7 +263,7 @@ export async function applyOrganization(
     }
 
     await removeEmptyFolders(rootId, createdIds);
-    await sortFolderTree(rootId);
+    await sortFolderTree(rootId, excludedNames);
   }
 
   return { movedCount: moved, unsortedCount: unsorted };
@@ -276,7 +273,12 @@ export async function applyOrganization(
 // folders before bookmarks, recursing into sub-folders. Front-to-back
 // placement only ever moves a node to an index <= its current one, sidestepping
 // Chrome's off-by-one when moving to a higher index.
-async function sortFolderTree(folderId: string): Promise<void> {
+// `excludedNames` (root level only) pins untouched out-of-scope folders to the
+// top, ahead of the alphabetised in-scope folders we just organised.
+async function sortFolderTree(
+  folderId: string,
+  excludedNames?: Set<string>,
+): Promise<void> {
   let node: chrome.bookmarks.BookmarkTreeNode | undefined;
   try {
     [node] = await chrome.bookmarks.getSubTree(folderId);
@@ -285,7 +287,9 @@ async function sortFolderTree(folderId: string): Promise<void> {
     return;
   }
   if (!node) return;
-  const sorted = [...(node.children ?? [])].sort(compareNodes);
+  const sorted = [...(node.children ?? [])].sort((a, b) =>
+    compareNodes(a, b, excludedNames),
+  );
   for (let i = 0; i < sorted.length; i++) {
     try {
       await chrome.bookmarks.move(sorted[i]!.id, { parentId: folderId, index: i });
@@ -293,6 +297,8 @@ async function sortFolderTree(folderId: string): Promise<void> {
       console.error("[sortFolderTree] move failed", sorted[i]!.id, e);
     }
   }
+  // Recurse into in-scope sub-folders with plain alpha — excluded folders only
+  // ever live at the root, so the pin tier is irrelevant deeper down.
   for (const child of sorted) {
     if (!child.url) await sortFolderTree(child.id);
   }
@@ -301,10 +307,16 @@ async function sortFolderTree(folderId: string): Promise<void> {
 function compareNodes(
   a: chrome.bookmarks.BookmarkTreeNode,
   b: chrome.bookmarks.BookmarkTreeNode,
+  excludedNames?: Set<string>,
 ): number {
   const aFolder = a.url ? 1 : 0;
   const bFolder = b.url ? 1 : 0;
   if (aFolder !== bFolder) return aFolder - bFolder;
+  if (excludedNames) {
+    const aExcluded = !a.url && excludedNames.has(a.title) ? 0 : 1;
+    const bExcluded = !b.url && excludedNames.has(b.title) ? 0 : 1;
+    if (aExcluded !== bExcluded) return aExcluded - bExcluded;
+  }
   return (a.title || a.url || "").localeCompare(b.title || b.url || "", undefined, {
     sensitivity: "base",
     numeric: true,
@@ -331,11 +343,7 @@ async function removeEmptyFolders(
   if (!root) return;
   for (const child of root?.children ?? []) {
     if (child.url) continue;
-    if (
-      keepIds.has(child.id) ||
-      child.title.startsWith(ORGANIZED_FOLDER_PREFIX)
-    )
-      continue;
+    if (keepIds.has(child.id)) continue;
     if (!hasUrl(child)) {
       try {
         await chrome.bookmarks.removeTree(child.id);

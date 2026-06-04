@@ -7,6 +7,7 @@
   --coral-deep: #c44c38;
   --amber: #daa144;
   --success: #16a34a;
+  --warning: #d97706;
   --danger: #dc2626;
   --r: 2px;
   --display: "Darker Grotesque", system-ui, sans-serif;
@@ -106,7 +107,7 @@ textarea:focus-visible,
   overflow: hidden;
   display: grid;
   place-items: center;
-  box-shadow: 4px 4px 0 var(--line);
+  box-shadow: 4px 4px 0 var(--hard);
 }
 .logo img {
   width: 100%;
@@ -629,32 +630,77 @@ h1 {
   flex-wrap: wrap;
 }
 
-/* folder scope checklist */
-.scope-list {
-  list-style: none;
-  padding: 0;
-  margin: 0 0 4px;
+/* folder scope badges */
+.scope-controls {
   display: flex;
-  flex-direction: column;
-  gap: 6px;
+  gap: 16px;
+  margin-bottom: 12px;
 }
-.scope-list li {
+.scope-ctrl-btn {
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink);
+  background: none;
+  border: none;
+  cursor: pointer;
+  border-bottom: 2px solid var(--coral);
+  padding: 0 0 2px;
+}
+.scope-ctrl-btn:hover {
+  color: var(--coral);
+}
+.scope-badges {
   display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 8px;
+  max-height: 130px; /* ~3 badge rows */
+  overflow-y: auto;
+  padding-right: 4px;
+}
+.scope-badge {
+  display: inline-flex;
   align-items: center;
-  gap: 10px;
+  border: 2px solid var(--line);
+  border-radius: var(--r);
+  padding: 8px 14px;
   font-family: var(--mono);
   font-size: 13px;
-  color: var(--ink-2);
-}
-.scope-list input[type="checkbox"] {
-  width: 16px;
-  height: 16px;
-  accent-color: var(--coral);
+  font-weight: 500;
+  background: var(--field);
+  color: var(--ink);
   cursor: pointer;
-  flex: none;
+  transition:
+    box-shadow 0.12s ease,
+    transform 0.12s ease,
+    background 0.15s ease,
+    color 0.15s ease,
+    border-color 0.15s ease;
 }
-.scope-list label {
-  cursor: pointer;
+.scope-badge:not(.selected):hover {
+  box-shadow: 1px 1px 0 var(--hard);
+  transform: translate(-1px, -1px);
+}
+.scope-badge:not(.selected):active {
+  transform: translate(0, 0);
+  box-shadow: none;
+}
+.scope-badge.selected {
+  background: var(--success);
+  border-color: var(--success);
+  color: #fff;
+  box-shadow: 2px 2px 0 var(--hard);
+}
+.scope-badge.selected:hover {
+  box-shadow: 3px 3px 0 var(--hard);
+  transform: translate(-1px, -1px);
+}
+.scope-badge.selected:active {
+  transform: translate(0, 0);
+  box-shadow: 1px 1px 0 var(--hard);
 }
 
 /* progress bar */
@@ -670,6 +716,24 @@ h1 {
   background: var(--coral);
   width: 0;
   transition: width 0.2s ease;
+}
+/* opaque phases (reading / proposing / applying): no measurable progress —
+   a coral block scans the track instead of a fake fixed fill */
+.progress.indeterminate {
+  overflow: hidden;
+}
+.progress.indeterminate > div {
+  width: 36%;
+  transition: none;
+  animation: scan 1.1s ease-in-out infinite;
+}
+@keyframes scan {
+  0% {
+    transform: translateX(-115%);
+  }
+  100% {
+    transform: translateX(300%);
+  }
 }
 
 /* taxonomy chips */
@@ -691,6 +755,13 @@ h1 {
   font-weight: 500;
   background: var(--field);
   color: var(--ink);
+  transition:
+    box-shadow 0.12s ease,
+    transform 0.12s ease;
+}
+.chip:hover {
+  box-shadow: 2px 2px 0 var(--hard);
+  transform: translate(-1px, -1px);
 }
 .chip [contenteditable] {
   outline: none;
@@ -750,18 +821,67 @@ ul.tree > li {
   gap: 12px;
   margin: 0;
   padding: 12px 14px;
-  border: 2px solid var(--line-soft);
+  border: 2px solid var(--line);
   border-radius: var(--r);
   font-family: var(--mono);
   font-size: 13px;
   background: var(--field);
   color: var(--ink-2);
+  cursor: default;
+  transition:
+    box-shadow 0.12s ease,
+    transform 0.12s ease;
+}
+ul.tree > li:hover {
+  box-shadow: 2px 2px 0 var(--hard);
+  transform: translate(-1px, -1px);
 }
 .count {
   flex: none;
   color: var(--coral);
   font-weight: 600;
   font-size: 12px;
+}
+
+/* preview hover popup (portal) — the bookmarks landing in a folder */
+.tree-pop {
+  position: fixed;
+  z-index: 60;
+  min-width: 220px;
+  max-width: 360px;
+  border: 2px solid var(--line);
+  border-radius: var(--r);
+  background: var(--surface);
+  box-shadow: 4px 4px 0 var(--hard);
+  font-family: var(--mono);
+  overflow: hidden;
+}
+.tree-pop-head {
+  padding: 9px 13px;
+  border-bottom: 2px solid var(--line);
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+  background: var(--field);
+}
+.tree-pop-list {
+  max-height: 250px; /* ~10 rows, then scroll */
+  overflow-y: auto;
+  padding: 5px 0;
+}
+.tree-pop-row {
+  padding: 4px 13px;
+  font-size: 12px;
+  line-height: 1.4;
+  color: var(--ink-2);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.tree-pop-row + .tree-pop-row {
+  border-top: 1px solid var(--line-soft);
 }
 
 /* ============ SETTINGS PAGE ============ */

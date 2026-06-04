@@ -53,6 +53,7 @@ async function handle(msg: Message): Promise<unknown> {
           msg.taxonomy,
           msg.assignments,
           bookmarks,
+          msg.excludedFolderNames ?? [],
         );
         return { movedCount, unsortedCount, snapshot } satisfies ApplyResult;
       } catch (e: unknown) {

@@ -157,6 +157,22 @@
         </div>
       </section>
 
+      <!-- FOLDERS IN SCOPE -->
+      <section class="card" id="folderScope" hidden>
+        <div class="card-head">
+          <h2>Folders in scope</h2>
+          <span class="sub">Unticked folders are left completely untouched</span>
+        </div>
+        <div class="card-body">
+          <div class="scope-controls">
+            <button class="scope-ctrl-btn" id="scopeSelectAll">Select all</button>
+            <button class="scope-ctrl-btn" id="scopeUnselectAll">Unselect all</button>
+          </div>
+          <div class="scope-badges" id="scopeList"></div>
+          <p class="muted" style="font-size: 11.5px">Auto-saved.</p>
+        </div>
+      </section>
+
       <!-- ESTIMATE -->
       <section class="card" id="estimate" hidden>
         <div class="card-head">
@@ -199,21 +215,6 @@
             </svg>
             Analyze Bookmarks
           </button>
-        </div>
-      </section>
-
-      <!-- FOLDERS IN SCOPE -->
-      <section class="card" id="folderScope" hidden>
-        <div class="card-head">
-          <h2>Folders in scope</h2>
-          <span class="sub">Untick any folder to exclude it from this run</span>
-        </div>
-        <div class="card-body">
-          <p class="muted" style="margin-bottom: 12px; font-size: 12.5px">
-            Unticked folders and everything inside them are left completely untouched.
-          </p>
-          <ul class="scope-list" id="scopeList"></ul>
-          <p class="muted" style="font-size: 11.5px">Auto-saved.</p>
         </div>
       </section>
 
@@ -297,8 +298,10 @@
                 stroke-linecap="round"
                 stroke-linejoin="round"
               >
-                <path d="M3 7v6h6"></path>
-                <path d="M3 13a9 9 0 1 0 3-7.7L3 8"></path>
+                <path d="M9 14 4 9l5-5"></path>
+                <path
+                  d="M4 9h10.5a5.5 5.5 0 0 1 5.5 5.5 5.5 5.5 0 0 1-5.5 5.5H11"
+                ></path>
               </svg>
               Undo
             </button>
