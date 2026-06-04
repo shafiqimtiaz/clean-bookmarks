@@ -30,6 +30,7 @@ const guard = (fn: () => Promise<void>) => () => {
 
 const run = new OrganizeRun(onState);
 let taxonomy: Taxonomy = [];
+let folderNames: string[] = [];
 
 // Provider registry + custom fallback, used by both the picker and the
 // status strip.
@@ -147,12 +148,17 @@ async function showHome() {
   if (!read.ok) return fail(read.error);
   const settings = await getSettings();
 
-  // Current Situation composition.
+  folderNames = read.data.folderNames;
+
   const counts = await send<CountScopeResult>({ type: "COUNT_SCOPE" });
   if (counts.ok) renderSituation(counts.data, settings);
   show("situation");
 
-  // Estimate.
+  if (folderNames.length > 0) {
+    renderFolderScope(folderNames, settings.excludedFolders);
+    show("folderScope");
+  }
+
   const est = estimateCost(read.data.bookmarks, settings);
   $("estBookmarks").textContent = String(read.data.bookmarks.length);
   $("estCalls").textContent = String(est.calls);
@@ -162,6 +168,34 @@ async function showHome() {
   $("estCost").textContent = est.usd.toFixed(3);
   $("estModel").textContent = settingsLabel(settings);
   show("estimate");
+}
+
+function renderFolderScope(names: string[], excluded: string[]) {
+  const excludedSet = new Set(excluded);
+  const list = $("scopeList");
+  list.innerHTML = "";
+  for (const name of names) {
+    const li = document.createElement("li");
+    const cb = document.createElement("input") as HTMLInputElement;
+    cb.type = "checkbox";
+    cb.id = `scope-${name}`;
+    cb.checked = !excludedSet.has(name);
+    cb.addEventListener("change", async () => {
+      const s = await getSettings();
+      const next = new Set(s.excludedFolders);
+      if (cb.checked) {
+        next.delete(name);
+      } else {
+        next.add(name);
+      }
+      await saveSettings({ excludedFolders: [...next] });
+    });
+    const lbl = document.createElement("label");
+    lbl.htmlFor = `scope-${name}`;
+    lbl.textContent = name;
+    li.append(cb, lbl);
+    list.appendChild(li);
+  }
 }
 
 function renderSituation(c: CountScopeResult, s: Settings) {
@@ -224,8 +258,10 @@ $("runBtn").addEventListener(
   guard(async () => {
     show("situation", false);
     show("estimate", false);
+    show("folderScope", false);
     show("progress");
-    taxonomy = await run.start();
+    const settings = await getSettings();
+    taxonomy = await run.start(settings.excludedFolders);
     renderChips();
     show("progress", false);
     show("review");
@@ -254,6 +290,19 @@ $("assignBtn").addEventListener(
   }),
 );
 
+$("reviewBackBtn").addEventListener("click", () => {
+  show("review", false);
+  show("situation");
+  if (folderNames.length > 0) show("folderScope");
+  show("estimate");
+});
+
+$("previewBackBtn").addEventListener("click", () => {
+  show("preview", false);
+  renderChips();
+  show("review");
+});
+
 $("applyBtn").addEventListener(
   "click",
   guard(async () => {
@@ -264,6 +313,7 @@ $("applyBtn").addEventListener(
       type: "APPLY",
       taxonomy,
       assignments: run.assignments,
+      excludedFolderNames: run.excludedFolderNames,
     });
     show("progress", false);
     if (!res.ok) return fail(res.error);
@@ -277,7 +327,6 @@ $("applyBtn").addEventListener(
   }),
 );
 
-$("cancelBtn").addEventListener("click", () => location.reload());
 
 $("doneBtn").addEventListener("click", () => {
   chrome.tabs.getCurrent((tab) =>
