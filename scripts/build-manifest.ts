@@ -30,11 +30,16 @@ for (const p of providers) {
 }
 const HOSTS = [...origins];
 
+const PACKAGE_JSON = resolve(PROJECT_ROOT, "package.json");
+const pkg = JSON.parse(readFileSync(PACKAGE_JSON, "utf8")) as { version: string };
+
 const template = JSON.parse(readFileSync(TEMPLATE, "utf8")) as Record<
   string,
   unknown
 >;
 template.optional_host_permissions = HOSTS;
+template.version = pkg.version;
+template.version_name = pkg.version;
 
 writeFileSync(OUT, JSON.stringify(template, null, 2) + "\n");
-console.log(`Wrote ${origins.size} host permissions -> ${OUT}`);
+console.log(`Wrote v${pkg.version} + ${origins.size} host permissions -> ${OUT}`);

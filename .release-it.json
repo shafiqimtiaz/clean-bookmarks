@@ -1,0 +1,21 @@
+{
+  "$schema": "https://unpkg.com/release-it@20/schema/release-it.json",
+  "npm": {
+    "publish": false
+  },
+  "git": {
+    "commitMessage": "chore: release v${version}",
+    "tagName": "v${version}",
+    "tag": true,
+    "push": true,
+    "requireCleanWorkingDir": true
+  },
+  "github": {
+    "release": true,
+    "releaseName": "Clean Bookmarks v${version}",
+    "assets": ["clean-bookmarks-v${version}.zip"]
+  },
+  "hooks": {
+    "after:bump": "npm run build && npm run zip"
+  }
+}
