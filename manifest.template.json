@@ -3,7 +3,7 @@
   "name": "Clean Bookmarks",
   "version": "0.0.0.1",
   "version_name": "0.0.0.1",
-  "description": "Organize your browser bookmarks with AI using your own API key. Local-first and private.",
+  "description": "Organize your bookmarks with AI. Local-first: uses your own API key, zero telemetry, no developer access to your data.",
   "homepage_url": "https://github.com/shafiq-imtiaz/clean-bookmarks",
   "minimum_chrome_version": "120",
 
