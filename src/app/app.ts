@@ -251,7 +251,6 @@ function fail(error: string) {
 }
 
 // Settings panel ──────────────────────────────────────────────
-const CUSTOM_MODEL = "__custom__";
 
 $("closeSettings").addEventListener("click", () => {
   show("settingsPanel", false);
@@ -264,30 +263,19 @@ function lockBaseUrl(locked: boolean) {
 
 function fillModels(providerId: string, selected?: string) {
   const preset = getProvider(providerId);
-  modelSelect.innerHTML = "";
+  modelList.innerHTML = "";
   if (preset) {
     for (const m of preset.models) {
       const opt = document.createElement("option");
       opt.value = m.id;
-      opt.textContent = m.name;
-      modelSelect.appendChild(opt);
+      modelList.appendChild(opt);
     }
   }
-  const custom = document.createElement("option");
-  custom.value = CUSTOM_MODEL;
-  custom.textContent = "Custom…";
-  modelSelect.appendChild(custom);
-
-  const known = selected && preset?.models.some((m) => m.id === selected);
-  modelSelect.value = known ? selected! : CUSTOM_MODEL;
-  modelCustom.value = known ? "" : (selected ?? "");
-  modelCustom.hidden = modelSelect.value !== CUSTOM_MODEL;
+  modelSelect.value = selected ?? "";
 }
 
 function chosenModel(): string {
-  return modelSelect.value === CUSTOM_MODEL
-    ? (modelCustom as HTMLInputElement).value.trim()
-    : modelSelect.value;
+  return modelSelect.value.trim();
 }
 
 const ALL = [...getProviders(), { id: CUSTOM_PROVIDER_ID, label: "Custom (OpenAI-compatible)", baseUrl: "", models: [] }];
@@ -301,56 +289,52 @@ editBaseUrlEl.addEventListener("click", () => {
   lockBaseUrl(false);
   baseUrl.focus();
 });
-// Rename to avoid conflict with editBaseUrl button variable
 const apiKeyInput = $<HTMLInputElement>("apiKey");
-const modelSelectEl = $<HTMLSelectElement>("modelSelect");
-const modelCustomEl = $<HTMLInputElement>("modelCustom");
-const modelSelect = modelSelectEl;
-const modelCustom = modelCustomEl;
-const provider = $<HTMLSelectElement>("provider");
+const modelSelect = $<HTMLInputElement>("modelSelect");
+const provider = $<HTMLInputElement>("provider");
+const providerList = $<HTMLDataListElement>("providerList");
+const modelList = $<HTMLDataListElement>("modelList");
 const prompt = $<HTMLTextAreaElement>("prompt");
 const saved = $("saved");
 
 async function initSettings() {
-  const providerEl = $<HTMLSelectElement>("provider");
-  providerEl.innerHTML = "";
+  providerList.innerHTML = "";
   for (const p of ALL) {
     const opt = document.createElement("option");
-    opt.value = p.id;
-    opt.textContent = p.label;
-    providerEl.appendChild(opt);
+    opt.value = p.label;
+    providerList.appendChild(opt);
   }
 
   const s = await getSettings();
   const providerId = s.provider;
-  const provider = getProvider(providerId);
+  const p = getProvider(providerId);
   keys = { ...s.apiKeys };
   if (s.apiKey && !keys[providerId]) keys[providerId] = s.apiKey;
   currentProvider = providerId;
-  providerEl.value = providerId;
-  baseUrl.value = providerId === CUSTOM_PROVIDER_ID ? s.baseUrl : (provider?.baseUrl ?? s.baseUrl);
+  const matched = ALL.find((x) => x.id === providerId);
+  provider.value = matched?.label ?? providerId;
+  baseUrl.value = providerId === CUSTOM_PROVIDER_ID ? s.baseUrl : (p?.baseUrl ?? s.baseUrl);
   apiKeyInput.value = keys[providerId] ?? "";
   fillModels(providerId, s.model);
   prompt.value = s.taxonomyPrompt || DEFAULT_TAXONOMY_PROMPT;
   lockBaseUrl(providerId !== CUSTOM_PROVIDER_ID);
 }
 
-$<HTMLSelectElement>("provider").addEventListener("change", () => {
+provider.addEventListener("change", () => {
+  const label = provider.value.trim();
+  const match = ALL.find((p) => p.label === label || p.id === label);
+  if (!match || match.id === currentProvider) return;
+
   keys[currentProvider] = apiKeyInput.value.trim();
-  const id = provider.value;
-  const preset = getProvider(id);
+  const id = match.id;
   currentProvider = id;
   apiKeyInput.value = keys[id] ?? "";
-  if (id !== CUSTOM_PROVIDER_ID && preset) {
-    baseUrl.value = preset.baseUrl;
+  if (id !== CUSTOM_PROVIDER_ID) {
+    const preset = getProvider(id);
+    if (preset) baseUrl.value = preset.baseUrl;
   }
-  const firstModel = preset?.models[0]?.id;
-  fillModels(id, firstModel);
+  fillModels(id, getProvider(id)?.models[0]?.id);
   lockBaseUrl(id !== CUSTOM_PROVIDER_ID);
-});
-
-modelSelectEl.addEventListener("change", () => {
-  modelCustomEl.hidden = modelSelectEl.value !== CUSTOM_MODEL;
 });
 
 $("saveSettings").addEventListener("click", async () => {

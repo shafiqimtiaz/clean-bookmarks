@@ -95,7 +95,8 @@
           <div class="settings-grid">
             <div class="settings-left">
               <label for="provider">Provider</label>
-              <select id="provider"></select>
+              <input id="provider" list="providerList" autocomplete="off" placeholder="Search or select…" />
+              <datalist id="providerList"></datalist>
 
               <label for="baseUrl">API base URL</label>
               <div class="row">
@@ -120,9 +121,9 @@
               <label for="apiKey">API key</label>
               <input id="apiKey" type="password" placeholder="sk-…" />
 
-              <label for="model">Model</label>
-              <select id="modelSelect"></select>
-              <input id="modelCustom" placeholder="model name" hidden />
+              <label for="modelSelect">Model</label>
+              <input id="modelSelect" list="modelList" autocomplete="off" placeholder="Search or type…" />
+              <datalist id="modelList"></datalist>
 
               <div class="btn-row">
                 <button id="saveSettings" class="primary">Save</button>
