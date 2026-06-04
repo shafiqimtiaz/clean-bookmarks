@@ -36,8 +36,8 @@ jobs:
             VERSION="${{ inputs.version }}"
           fi
           echo "Publishing version: $VERSION"
-          jq --arg v "$VERSION" '.version = $v | .version_name = $v' manifest.template.json > tmp.json
-          mv tmp.json manifest.template.json
+          jq --arg v "$VERSION" '.version = $v' package.json > tmp.json
+          mv tmp.json package.json
 
       - run: npm ci
 
