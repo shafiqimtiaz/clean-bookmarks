@@ -24,9 +24,9 @@ There is **no backend, no account, and no data store of ours**. Your bookmarks s
 
 ## Features
 
-- **AI categorization in two passes** — the first pass proposes a taxonomy of 8–15 top-level categories (≤2 levels deep); the second pass assigns every bookmark to the fixed taxonomy. Categories stay consistent across thousands of bookmarks.
+- **AI categorization in two passes** — the first pass proposes a taxonomy of 8–12 top-level categories (sub-categories only when 10+ bookmarks share a clear sub-theme); the second pass assigns every bookmark to the fixed taxonomy. Categories stay consistent across thousands of bookmarks.
 - **You stay in control** — review the proposed categories in the UI. Rename, remove, or add categories before anything is moved.
-- **Non-destructive** — your existing named folders are never touched. Only the "junk drawer" is organized, and the result is a new dated `📁 Organized — YYYY-MM-DD` folder.
+- **Non-destructive** — the Bookmarks Bar and Other Bookmarks roots are never moved. Named folders inside them are flattened into the new category structure (and emptied); folders you mark as "exclude" are left exactly as they were.
 - **One-click undo** — the current bookmark layout is snapshotted before any change. A single click restores it.
 - **Bring your own key** — your API key is stored in `chrome.storage.local` and is never synced. The extension ships with no install-time host permissions; access to your endpoint is granted per-origin on first use.
 - **Cost transparency** — see the estimated number of API calls, tokens, and cost *before* you spend a cent.
@@ -53,7 +53,7 @@ Toolbar popup ──"Organize"──▶ Full-page tab (runs the long job)
 3. **Propose taxonomy** — batched call to the model. The model is invoked with a TypeBox-typed `propose_taxonomy` tool, so the taxonomy comes back as validated structured args — no JSON parsing.
 4. **Review** — the user edits the proposed categories.
 5. **Assign** — every bookmark is matched to the fixed taxonomy in parallel batches. Each bookmark is referenced by a numeric index, so the model never echoes (or corrupts) your data. The response is parsed and validated against a Zod schema.
-6. **Apply** — a snapshot of the current layout is taken, then bookmarks are moved into the new dated folder.
+6. **Apply** — a snapshot of the current layout is taken, then category folders are created directly inside the Bookmarks Bar and Other Bookmarks roots and the bookmarks are moved into them.
 7. **Undo** — restore the snapshot at any time.
 
 > [!IMPORTANT]
