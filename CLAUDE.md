@@ -1,106 +1,28 @@
+This is a Node.js project. Use `npm` and standard Node tooling.
 
-Default to using Bun instead of Node.js.
+- Use `node <file>` to run JS; use `tsx <file>` (or `npm run <script>`) to run TypeScript directly.
+- Use `npm test` / a test runner only if a test setup exists (none currently).
+- Use `npm install` to install dependencies. The project pins `engines.node >= 18`.
+- Use `npm run <script>` to run package scripts.
+- Use `npx <package> <command>` for one-off binaries.
+- A project-local `.npmrc` pins the public npm registry so installs work on any machine.
 
-- Use `bun <file>` instead of `node <file>` or `ts-node <file>`
-- Use `bun test` instead of `jest` or `vitest`
-- Use `bun build <file.html|file.ts|file.css>` instead of `webpack` or `esbuild`
-- Use `bun install` instead of `npm install` or `yarn install` or `pnpm install`
-- Use `bun run <script>` instead of `npm run <script>` or `yarn run <script>` or `pnpm run <script>`
-- Use `bunx <package> <command>` instead of `npx <package> <command>`
-- Bun automatically loads .env, so don't use dotenv.
+## Build pipeline
+
+- `npm run build` — bundles the extension into `dist/` via **esbuild** (called from `build.ts`, run with `tsx`). Code-splitting + ESM, `platform: 'browser'`.
+- `npm run sync-models` — regenerates `src/core/ai/models.json` from the installed `@earendil-works/pi-ai` catalog.
+- `npm run build-manifest` — regenerates `manifest.json` from `manifest.template.json`.
+- `prebuild` runs sync-models + build-manifest automatically before `build`.
+- `npm run typecheck` — `tsc --noEmit`.
+- Build scripts (`build.ts`, `scripts/*.ts`) are TypeScript run via `tsx`. They use standard `node:*` APIs only — no runtime-specific globals. Derive `__dirname` with `fileURLToPath(import.meta.url)`.
+- Icons are resized from `public/icons/icon.png` to 16/48/128 using **sharp** (cross-platform, no system ImageMagick required). `scripts/gen-icons.ts` is a pure-JS placeholder generator.
 
 ## APIs
 
-- `Bun.serve()` supports WebSockets, HTTPS, and routes. Don't use `express`.
-- `bun:sqlite` for SQLite. Don't use `better-sqlite3`.
-- `Bun.redis` for Redis. Don't use `ioredis`.
-- `Bun.sql` for Postgres. Don't use `pg` or `postgres.js`.
-- `WebSocket` is built-in. Don't use `ws`.
-- Prefer `Bun.file` over `node:fs`'s readFile/writeFile
-- Bun.$`ls` instead of execa.
-
-## Testing
-
-Use `bun test` to run tests.
-
-```ts#index.test.ts
-import { test, expect } from "bun:test";
-
-test("hello world", () => {
-  expect(1).toBe(1);
-});
-```
+- This is a Chrome MV3 extension (browser target). Source under `src/` uses Web/Chrome extension APIs (`chrome.*`), vanilla DOM, Zod, and `@earendil-works/pi-ai`. No Node runtime APIs in `src/`.
+- Bundler output must stay framework-free vanilla DOM — no React/Vite.
 
 ## Frontend
 
-Use HTML imports with `Bun.serve()`. Don't use `vite`. HTML imports fully support React, CSS, Tailwind.
-
-Server:
-
-```ts#index.ts
-import index from "./index.html"
-
-Bun.serve({
-  routes: {
-    "/": index,
-    "/api/users/:id": {
-      GET: (req) => {
-        return new Response(JSON.stringify({ id: req.params.id }));
-      },
-    },
-  },
-  // optional websocket support
-  websocket: {
-    open: (ws) => {
-      ws.send("Hello, world!");
-    },
-    message: (ws, message) => {
-      ws.send(message);
-    },
-    close: (ws) => {
-      // handle close
-    }
-  },
-  development: {
-    hmr: true,
-    console: true,
-  }
-})
-```
-
-HTML files can import .tsx, .jsx or .js files directly and Bun's bundler will transpile & bundle automatically. `<link>` tags can point to stylesheets and Bun's CSS bundler will bundle.
-
-```html#index.html
-<html>
-  <body>
-    <h1>Hello, world!</h1>
-    <script type="module" src="./frontend.tsx"></script>
-  </body>
-</html>
-```
-
-With the following `frontend.tsx`:
-
-```tsx#frontend.tsx
-import React from "react";
-import { createRoot } from "react-dom/client";
-
-// import .css files directly and it works
-import './index.css';
-
-const root = createRoot(document.body);
-
-export default function Frontend() {
-  return <h1>Hello, world!</h1>;
-}
-
-root.render(<Frontend />);
-```
-
-Then, run index.ts
-
-```sh
-bun --hot ./index.ts
-```
-
-For more information, read the Bun API docs in `node_modules/bun-types/docs/**.mdx`.
+- HTML pages (`src/options/options.html`, `src/app/app.html`) reference flat bundled `[name].js` files emitted by esbuild. Add new entrypoints to the `entryPoints` array in `build.ts`.
+- Shared styles live in `src/styles.css`, copied verbatim into `dist/`.

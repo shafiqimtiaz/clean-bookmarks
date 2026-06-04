@@ -34,7 +34,7 @@ export function buildModel(settings: Settings): Model<string> {
   if (!slim) {
     throw new Error(
       `Unknown model: ${settings.provider}/${settings.model}. ` +
-        `Pick a model from Settings or run "bun run sync-models".`,
+        `Pick a model from Settings or run "npm run sync-models".`,
     );
   }
   return {

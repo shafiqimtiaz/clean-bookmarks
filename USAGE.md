@@ -2,7 +2,7 @@
 
 ## Prerequisites
 
-- [Bun](https://bun.sh) 1.3+
+- [Node.js](https://nodejs.org) 18+
 - A Chromium-based browser (Chrome, Edge, Brave, Opera, etc.)
 
 ## Build the extension
@@ -10,8 +10,8 @@
 ```bash
 git clone https://github.com/shafiqimtiaz/clean-bookmarks.git
 cd clean-bookmarks
-bun install
-bun run build
+npm install
+npm run build
 ```
 
 The built extension will be in the `dist/` folder.

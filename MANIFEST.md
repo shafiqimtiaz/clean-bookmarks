@@ -18,6 +18,6 @@ Every change is preceded by a snapshot. One click and your bookmark tree is exac
 
 ## Plain tech, on purpose
 
-TypeScript, Bun, vanilla DOM, Chrome MV3, Zod. No framework, no 800 MB of transitive dependencies, no build pipeline sorcery. The whole extension should be readable in an afternoon and auditable by one person with a coffee. The cost of cleverness is paid by the next maintainer; we try not to bill them.
+TypeScript, Node.js, vanilla DOM, Chrome MV3, Zod. No framework, no 800 MB of transitive dependencies, no build pipeline sorcery. The whole extension should be readable in an afternoon and auditable by one person with a coffee. The cost of cleverness is paid by the next maintainer; we try not to bill them.
 
 If that is also what you want, welcome.

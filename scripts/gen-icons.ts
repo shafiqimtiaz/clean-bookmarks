@@ -1,6 +1,6 @@
 // Generates solid-color placeholder PNG icons (16/48/128) into public/icons.
 // Replace with real artwork before publishing. Minimal PNG encoder using
-// Bun's zlib so we don't pull in an image dependency.
+// Node's zlib so we don't pull in an image dependency.
 import { deflateSync } from 'node:zlib';
 import { mkdirSync, writeFileSync } from 'node:fs';
 

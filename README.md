@@ -3,7 +3,7 @@
 
   <h3>AI-powered bookmark organizer for Chromium. Local-first, bring-your-own-key.</h3>
 
-  [![Bun](https://img.shields.io/badge/Bun-%23000000.svg?style=flat-square&logo=bun&logoColor=white)](https://bun.com)
+  [![Node.js](https://img.shields.io/badge/Node.js-%23339933.svg?style=flat-square&logo=nodedotjs&logoColor=white)](https://nodejs.org)
   [![TypeScript](https://img.shields.io/badge/TypeScript-3178C6.svg?style=flat-square&logo=typescript&logoColor=white)](https://www.typescriptlang.org)
   [![Chrome MV3](https://img.shields.io/badge/Chrome%20MV3-4285F4.svg?style=flat-square&logo=googlechrome&logoColor=white)](https://developer.chrome.com/docs/extensions/mv3/intro/)
   [![MIT License](https://img.shields.io/badge/License-MIT-yellow.svg?style=flat-square)](LICENSE)
@@ -63,7 +63,7 @@ Toolbar popup ──"Organize"──▶ Full-page tab (runs the long job)
 
 ### Prerequisites
 
-- [Bun](https://bun.com) 1.3+
+- [Node.js](https://nodejs.org) 18+
 - A Chromium-based browser (Chrome, Edge, Brave, etc.)
 - An API key for any supported provider (OpenAI, Anthropic, Google Gemini, Mistral, OpenAI Responses, or a custom OpenAI-compatible endpoint)
 
@@ -72,8 +72,8 @@ Toolbar popup ──"Organize"──▶ Full-page tab (runs the long job)
 ```bash
 git clone https://github.com/shafiqimtiaz/clean-bookmarks.git
 cd clean-bookmarks
-bun install
-bun run build
+npm install
+npm run build
 ```
 
 Then load the unpacked extension:
@@ -97,11 +97,10 @@ Click the toolbar icon, then **Organize bookmarks** to start.
 
 | Command | Description |
 | --- | --- |
-| `bun run build` | Bundle the extension into `dist/` |
-| `bun run typecheck` | Type-check the project with `tsc` |
-| `bun run test` | Run tests with `bun test` |
-| `bun run sync-models` | Refresh the model catalog used in Settings |
-| `bun run build-manifest` | Regenerate `manifest.json` from `manifest.template.json` |
+| `npm run build` | Bundle the extension into `dist/` (esbuild) |
+| `npm run typecheck` | Type-check the project with `tsc` |
+| `npm run sync-models` | Refresh the model catalog used in Settings |
+| `npm run build-manifest` | Regenerate `manifest.json` from `manifest.template.json` |
 
 ## Project layout
 
@@ -128,7 +127,7 @@ src/
 | Layer | Technology |
 | --- | --- |
 | Language | TypeScript |
-| Runtime / bundler | Bun (`bun build`) |
+| Tooling / bundler | Node.js + esbuild (`tsx` runs the TS build scripts) |
 | Platform | Chrome Manifest V3 |
 | AI | [`@earendil-works/pi-ai`](https://www.npmjs.com/package/@earendil-works/pi-ai) for multi-provider streaming + [Zod](https://zod.dev) for parse-time validation + TypeBox for tool-calling schemas |
 | UI | Vanilla DOM — no framework |
