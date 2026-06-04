@@ -12,7 +12,6 @@ import {
   getProviders,
   getProvider,
   getModel,
-  CUSTOM_PROVIDER_ID,
 } from "../core/providers";
 import { complete } from "../core/ai/provider";
 import { DEFAULT_TAXONOMY_PROMPT } from "../core/ai/pass1-taxonomy";
@@ -33,17 +32,7 @@ const run = new OrganizeRun(onState);
 let taxonomy: Taxonomy = [];
 let folderNames: string[] = [];
 
-// Provider registry + custom fallback, used by both the picker and the
-// status strip.
-const ALL = [
-  ...getProviders(),
-  {
-    id: CUSTOM_PROVIDER_ID,
-    label: "Custom (OpenAI-compatible)",
-    baseUrl: "",
-    models: [],
-  },
-];
+const ALL = getProviders();
 
 // Two-letter monogram for the status strip + provider tiles. Multi-word
 // labels -> initials; single word -> first two letters.
@@ -227,7 +216,6 @@ function fmtTokens(n: number): string {
 }
 
 function settingsLabel(s: Settings): string {
-  if (s.provider === CUSTOM_PROVIDER_ID) return s.model || "custom";
   const p = getProvider(s.provider);
   const m = getModel(s.provider, s.model);
   return m ? `${p ? LABEL_OF(p.id) : s.provider} / ${m.name}` : s.model;
@@ -610,7 +598,7 @@ function renderProviderGrid(filter = "") {
     const tile = document.createElement("button");
     tile.type = "button";
     tile.className = "tile" + (p.id === currentProvider ? " sel" : "");
-    const mark = p.id === CUSTOM_PROVIDER_ID ? "{}" : monogram(p.label);
+    const mark = monogram(p.label);
     tile.innerHTML = `<span class="mark">${mark}</span><span class="nm">${p.label}</span>`;
     tile.addEventListener("click", () => selectProvider(p.id));
     provGrid.appendChild(tile);
@@ -622,14 +610,10 @@ function selectProvider(id: string) {
   keys[currentProvider] = apiKeyInput.value.trim();
   currentProvider = id;
   apiKeyInput.value = keys[id] ?? "";
-  if (id !== CUSTOM_PROVIDER_ID) {
-    const preset = getProvider(id);
-    if (preset) baseUrl.value = preset.baseUrl;
-  } else {
-    baseUrl.value = "";
-  }
-  fillModels(id, getProvider(id)?.models[0]?.id);
-  lockBaseUrl(id !== CUSTOM_PROVIDER_ID);
+  const preset = getProvider(id);
+  if (preset) baseUrl.value = preset.baseUrl;
+  fillModels(id, preset?.models[0]?.id);
+  lockBaseUrl(true);
   renderProviderGrid(provSearch.value);
   resetTestStatus();
 }
@@ -664,7 +648,7 @@ function formSettings(base: Settings): Settings {
 
 $("testBtn").addEventListener("click", async () => {
   const tentative = formSettings(await getSettings());
-  if (!tentative.apiKey && tentative.provider !== CUSTOM_PROVIDER_ID) {
+  if (!tentative.apiKey) {
     testStatus.className = "teststatus err show";
     testStatus.textContent = "✗ Enter an API key first";
     return;
@@ -717,13 +701,12 @@ async function initSettings() {
   currentProvider = providerId;
   provSearch.value = "";
   renderProviderGrid();
-  baseUrl.value =
-    providerId === CUSTOM_PROVIDER_ID ? s.baseUrl : (p?.baseUrl ?? s.baseUrl);
+  baseUrl.value = s.baseUrl || p?.baseUrl || "";
   apiKeyInput.value = keys[providerId] ?? "";
   apiKeyInput.type = "password";
   fillModels(providerId, s.model);
   prompt.value = s.taxonomyPrompt || DEFAULT_TAXONOMY_PROMPT;
-  lockBaseUrl(providerId !== CUSTOM_PROVIDER_ID);
+  lockBaseUrl(!s.baseUrl);
 }
 
 $("saveSettings").addEventListener("click", async () => {

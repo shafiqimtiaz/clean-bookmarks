@@ -28,19 +28,15 @@ export interface Assignment {
 }
 
 export interface Settings {
-  // Provider id from src/core/ai/models.json, or "custom" for arbitrary
-  // OpenAI-compatible endpoints (Ollama, LM Studio, vLLM, etc.).
   provider: string;
-  model: string; // model id from the registry, or user-typed when provider=custom
-  apiKey: string; // active key for the selected provider
-  apiKeys: Record<string, string>; // remembered key per provider id
-  // Required only when provider === "custom". The runtime reads this for
-  // host permissions and the AI client baseUrl.
+  model: string;
+  apiKey: string;
+  apiKeys: Record<string, string>;
   baseUrl: string;
-  seedCategories: string[]; // optional user-seeded categories (pass 1 respects)
-  taxonomyPrompt: string; // custom prompt for category generation (empty = use default)
-  consentAt: number | null; // epoch ms of first-run consent, null = not given
-  lastCleanupAt: number | null; // epoch ms of last successful apply, null = never
+  seedCategories: string[];
+  taxonomyPrompt: string;
+  consentAt: number | null;
+  lastCleanupAt: number | null;
   excludedFolders: string[];
 }
 

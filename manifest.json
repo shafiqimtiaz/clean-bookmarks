@@ -1,10 +1,10 @@
 {
   "manifest_version": 3,
   "name": "Clean Bookmarks",
-  "version": "0.1.0",
-  "version_name": "0.1.0",
+  "version": "0.0.0.1",
+  "version_name": "0.0.0.1",
   "description": "Organize your browser bookmarks with AI using your own API key. Local-first and private.",
-  "homepage_url": "https://github.com/shafiqimtiaz/clean-bookmarks",
+  "homepage_url": "https://github.com/shafiq-imtiaz/clean-bookmarks",
   "minimum_chrome_version": "120",
   "permissions": [
     "bookmarks",
@@ -36,8 +36,7 @@
     "https://token-plan-ams.xiaomimimo.com/*",
     "https://token-plan-cn.xiaomimimo.com/*",
     "https://token-plan-sgp.xiaomimimo.com/*",
-    "https://api.z.ai/*",
-    "https://*/*"
+    "https://api.z.ai/*"
   ],
   "background": {
     "service_worker": "service-worker.js",

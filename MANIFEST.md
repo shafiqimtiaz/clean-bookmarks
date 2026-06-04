@@ -6,7 +6,7 @@ No account. No backend. No telemetry. The extension talks to the AI endpoint you
 
 ## Bring your own key
 
-We will never sit between you and your model. There is no first-party API, no bundled account, no quota. You pick a provider from a long dropdown, or use `Custom` for any OpenAI-compatible endpoint. If we disappear, the extension keeps working — there is no server to shut down.
+We will never sit between you and your model. There is no first-party API, no bundled account, no quota. You pick a provider from a long dropdown. If we disappear, the extension keeps working — there is no server to shut down.
 
 ## No silent access
 

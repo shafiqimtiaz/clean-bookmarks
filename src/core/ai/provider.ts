@@ -7,29 +7,11 @@
 // never land in the extension bundle.
 
 import type { Model, Context, AssistantMessage } from "@earendil-works/pi-ai";
-import { getModel, CUSTOM_PROVIDER_ID } from "../providers";
+import { getModel } from "../providers";
 import type { Settings } from "../types";
 
-// Build a pi-ai Model for the user's chosen provider/model. For built-in
-// providers we hydrate from the slim registry but use the user's stored
-// baseUrl (so an "Edit base URL" override survives provider changes).
-// For "custom" we synthesize an openai-completions Model.
 export function buildModel(settings: Settings): Model<string> {
   const userBaseUrl = settings.baseUrl?.replace(/\/$/, "");
-  if (settings.provider === CUSTOM_PROVIDER_ID) {
-    return {
-      id: settings.model || "custom",
-      name: settings.model || "Custom",
-      api: "openai-completions",
-      provider: "custom",
-      baseUrl: userBaseUrl,
-      reasoning: false,
-      input: ["text"],
-      cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 },
-      contextWindow: 128_000,
-      maxTokens: 8_192,
-    };
-  }
   const slim = getModel(settings.provider, settings.model);
   if (!slim) {
     throw new Error(

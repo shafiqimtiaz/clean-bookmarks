@@ -61,7 +61,6 @@ const LABEL: Record<string, string> = {
   "cloudflare-workers-ai": "Cloudflare Workers AI",
   opencode: "OpenCode Zen",
   nvidia: "NVIDIA NIM",
-  custom: "Custom (OpenAI-compatible)",
 };
 
 const KNOWN_BASEURLS: Record<string, string> = Object.fromEntries(
@@ -69,6 +68,9 @@ const KNOWN_BASEURLS: Record<string, string> = Object.fromEntries(
     ([id, p]) => [p.baseUrl.replace(/\/$/, ""), id],
   ),
 );
+const FALLBACK_PROVIDER_ID = Object.keys(
+  REGISTRY as unknown as Record<string, ProviderInfo>,
+)[0] ?? "openai";
 
 export function getProviders(): ProviderInfo[] {
   return Object.values(REGISTRY as unknown as Record<string, ProviderInfo>).map(
@@ -112,8 +114,6 @@ export function providerForBaseUrl(baseUrl: string): {
   baseUrl: string;
 } {
   const norm = baseUrl.replace(/\/$/, "");
-  const id = KNOWN_BASEURLS[norm] ?? "custom";
+  const id = KNOWN_BASEURLS[norm] ?? FALLBACK_PROVIDER_ID;
   return { id, baseUrl: norm };
 }
-
-export const CUSTOM_PROVIDER_ID = "custom";

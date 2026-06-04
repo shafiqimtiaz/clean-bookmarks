@@ -20,12 +20,10 @@ const DEFAULT_SETTINGS: Settings = {
   excludedFolders: [],
 };
 
-// One-shot migration from the pre-pi-ai settings shape (top-level baseUrl +
-// model, no provider). v0.1.x stored that; v0.2+ derives provider from
-// baseUrl and keeps baseUrl only for the "custom" case. Idempotent: safe to
-// run on every read.
 function migrate(raw: Partial<Settings> & Record<string, unknown>): Settings {
-  // Already migrated.
+  if (typeof raw.provider === "string" && raw.provider === "custom") {
+    return { ...DEFAULT_SETTINGS, ...raw, provider: DEFAULT_PROVIDER_ID } as Settings;
+  }
   if (typeof raw.provider === "string" && raw.provider) {
     return { ...DEFAULT_SETTINGS, ...raw } as Settings;
   }

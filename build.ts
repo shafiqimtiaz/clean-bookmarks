@@ -45,10 +45,4 @@ for (const size of sizes) {
     .toFile(join(OUT, 'icons', `icon${size}.png`));
 }
 
-// Copy remaining icons (e.g. logo.png) verbatim.
-for (const f of await readdir('public/icons').catch(() => [])) {
-  if (f === 'icon.png') continue;
-  await cp(join('public/icons', f), join(OUT, 'icons', f));
-}
-
 console.log('Built -> dist/');

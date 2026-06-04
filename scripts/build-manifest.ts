@@ -28,7 +28,7 @@ for (const p of providers) {
   } catch {
   }
 }
-const HOSTS = [...origins, "https://*/*"];
+const HOSTS = [...origins];
 
 const template = JSON.parse(readFileSync(TEMPLATE, "utf8")) as Record<
   string,
@@ -37,4 +37,4 @@ const template = JSON.parse(readFileSync(TEMPLATE, "utf8")) as Record<
 template.optional_host_permissions = HOSTS;
 
 writeFileSync(OUT, JSON.stringify(template, null, 2) + "\n");
-console.log(`Wrote ${origins.size} host permissions + wildcard -> ${OUT}`);
+console.log(`Wrote ${origins.size} host permissions -> ${OUT}`);
