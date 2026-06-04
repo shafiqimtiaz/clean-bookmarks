@@ -9,6 +9,8 @@
   [![MIT License](https://img.shields.io/badge/License-MIT-yellow.svg?style=flat-square)](LICENSE)
 
   [Overview](#overview) • [Features](#features) • [How it works](#how-it-works) • [Get started](#get-started) • [Project layout](#project-layout)
+
+  **[▶ Try it online](https://shafiqimtiaz.github.io/clean-bookmarks/)**
 </div>
 
 ## Overview
