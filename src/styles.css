@@ -629,6 +629,34 @@ h1 {
   flex-wrap: wrap;
 }
 
+/* folder scope checklist */
+.scope-list {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.scope-list li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-family: var(--mono);
+  font-size: 13px;
+  color: var(--ink-2);
+}
+.scope-list input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--coral);
+  cursor: pointer;
+  flex: none;
+}
+.scope-list label {
+  cursor: pointer;
+}
+
 /* progress bar */
 .progress {
   height: 22px;
