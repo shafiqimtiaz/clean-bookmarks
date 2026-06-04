@@ -8,34 +8,40 @@
   [![Chrome MV3](https://img.shields.io/badge/Chrome%20MV3-4285F4.svg?style=flat-square&logo=googlechrome&logoColor=white)](https://developer.chrome.com/docs/extensions/mv3/intro/)
   [![MIT License](https://img.shields.io/badge/License-MIT-yellow.svg?style=flat-square)](LICENSE)
 
-  [Overview](#overview) • [Features](#features) • [How it works](#how-it-works) • [Get started](#get-started) • [Project layout](#project-layout)
+  [Overview](#overview) • [Features](#features) • [How it works](#how-it-works) • [Get started](#get-started) • [Project layout](#project-layout) • [Privacy](#privacy)
 
   **[▶ Try it online](https://shafiqimtiaz.github.io/clean-bookmarks/)**
 </div>
+
+---
 
 ## Overview
 
 Clean Bookmarks turns a messy bookmark collection into a clean, categorized folder tree. It scans the bookmarks piled into `Other Bookmarks` and the loose items on the `Bookmarks Bar`, asks an AI to propose a category structure, lets you tune it, then sorts everything into place. One click and it's all back the way it was.
 
-There is **no backend, no account, and no data store of ours**. Your bookmarks stay in your browser, and the only thing that ever leaves your device is bookmark titles and URLs, sent to the AI endpoint **you** configure.
+No backend. No account. No data store. Your bookmarks stay in your browser; the only thing that ever leaves your device is bookmark titles and URLs, sent to the AI endpoint **you** configure.
 
 > [!NOTE]
-> Ships with a built-in catalog of 27 providers (OpenAI, Anthropic, Google, Mistral, DeepSeek, Groq, xAI, OpenRouter, Ollama, LM Studio, …) and a `Custom` mode for any other OpenAI-compatible endpoint. The browser runtime supports OpenAI, Anthropic, Google Gemini, and Mistral.
+> Ships with a built-in catalog of 27 providers — OpenAI, Anthropic, Google Gemini, Mistral, DeepSeek, Groq, xAI, OpenRouter, Ollama, LM Studio, and more — plus a `Custom` mode for any OpenAI-compatible endpoint. The browser runtime supports OpenAI, Anthropic, Google Gemini, and Mistral natively.
+
+---
 
 ## Features
 
-- **AI categorization in two passes** — the first pass proposes a taxonomy of 8–12 top-level categories (sub-categories only when 10+ bookmarks share a clear sub-theme); the second pass assigns every bookmark to the fixed taxonomy. Categories stay consistent across thousands of bookmarks.
-- **You stay in control** — review the proposed categories in the UI. Rename, remove, or add categories before anything is moved.
-- **Your prompt, your categories** — the prompt the AI uses to propose a taxonomy is editable in Settings. Override the default to bias the structure toward your work, hobbies, or folder shape. Reset with one click.
-- **Non-destructive** — the Bookmarks Bar and Other Bookmarks roots are never moved. Named folders inside them are flattened into the new category structure (and emptied); folders you mark as "exclude" are left exactly as they were.
+- **Two-pass AI categorization** — the first pass proposes a taxonomy of 8–12 top-level categories (sub-categories only when 10+ bookmarks share a clear sub-theme); the second pass assigns every bookmark to the fixed taxonomy. Categories stay consistent across thousands of bookmarks.
+- **Editable taxonomy** — review the proposed categories in the UI. Rename, remove, or add categories before anything is moved.
+- **Custom prompt** — the prompt the AI uses to propose a taxonomy is editable in Settings. Override the default to bias the structure toward your work, hobbies, or folder shape. Reset with one click.
+- **Non-destructive** — the Bookmarks Bar and Other Bookmarks roots are never moved. Named folders inside them are flattened into the new structure (and emptied); folders you mark as "exclude" are left exactly as they were.
 - **One-click undo** — the current bookmark layout is snapshotted before any change. A single click restores it.
-- **Bring your own key** — your API key is stored in `chrome.storage.local` and is never synced. The extension ships with no install-time host permissions; access to your endpoint is granted per-origin on first use.
-- **Cost transparency** — see the estimated number of API calls, tokens, and cost *before* you spend a cent.
-- **Resilient** — requests are batched with bounded concurrency, automatic retries, and a safe `Unsorted` fallback for anything the model can't confidently place.
+- **Bring your own key** — your API key is stored in `chrome.storage.local` and is never synced. No install-time host permissions; access to your endpoint is granted per-origin on first use.
+- **Cost estimate** — see the expected number of API calls, tokens, and dollar cost before you spend anything.
+- **Resilient execution** — requests are batched with bounded concurrency, automatic retries, and a safe `Unsorted` fallback for anything the model can't confidently place.
+
+---
 
 ## How it works
 
-The run is a small state machine executed in a full-page extension tab. The service worker only brokers fast `chrome.bookmarks` operations.
+The organize job runs as a small state machine inside a full-page extension tab. The service worker only brokers fast `chrome.bookmarks` API calls.
 
 ```
 Toolbar popup ──"Organize"──▶ Full-page tab (runs the long job)
@@ -47,18 +53,20 @@ Toolbar popup ──"Organize"──▶ Full-page tab (runs the long job)
                           Your configured AI provider
 ```
 
+> [!IMPORTANT]
+> The AI job runs in a full-page extension tab, not the service worker. MV3 service workers are killed after ~30 seconds of idle, which would interrupt a multi-minute run. The tab context stays alive for the duration; the service worker only handles fast `chrome.bookmarks` operations.
+
 ### Pipeline
 
-1. **Read scope** — collect everything in `Other Bookmarks` and loose items on the `Bookmarks Bar`. Named folders are left alone.
-2. **Estimate** — compute batch count, expected tokens, and dollar cost; show it to the user.
-3. **Propose taxonomy** — batched call to the model. The model is invoked with a TypeBox-typed `propose_taxonomy` tool, so the taxonomy comes back as validated structured args — no JSON parsing.
+1. **Read scope** — collect everything in `Other Bookmarks` and loose items on the `Bookmarks Bar`. Named folders are left untouched.
+2. **Estimate** — compute batch count, expected tokens, and dollar cost; show it to the user before proceeding.
+3. **Propose taxonomy** — batched call to the model using a TypeBox-typed `propose_taxonomy` tool, so the taxonomy comes back as validated structured args — no JSON parsing.
 4. **Review** — the user edits the proposed categories.
-5. **Assign** — every bookmark is matched to the fixed taxonomy in parallel batches. Each bookmark is referenced by a numeric index, so the model never echoes (or corrupts) your data. The response is parsed and validated against a Zod schema.
-6. **Apply** — a snapshot of the current layout is taken, then category folders are created directly inside the Bookmarks Bar and Other Bookmarks roots and the bookmarks are moved into them.
+5. **Assign** — every bookmark is matched to the fixed taxonomy in parallel batches. Each bookmark is referenced by a numeric index, so the model never echoes or corrupts your data. Responses are parsed and validated against a Zod schema.
+6. **Apply** — a snapshot of the current layout is taken, then category folders are created inside the Bookmarks Bar and Other Bookmarks roots, and bookmarks are moved into them.
 7. **Undo** — restore the snapshot at any time.
 
-> [!IMPORTANT]
-> The AI job runs in a full-page extension tab, not the service worker. MV3 service workers are killed after ~30s of idle, which would interrupt a multi-minute run. The tab context stays alive instead. The service worker only brokers fast `chrome.bookmarks` operations.
+---
 
 ## Get started
 
@@ -66,7 +74,7 @@ Toolbar popup ──"Organize"──▶ Full-page tab (runs the long job)
 
 - [Node.js](https://nodejs.org) 18+
 - A Chromium-based browser (Chrome, Edge, Brave, etc.)
-- An API key for any supported provider (OpenAI, Anthropic, Google Gemini, Mistral, OpenAI Responses, or a custom OpenAI-compatible endpoint)
+- An API key for any supported provider
 
 ### Build and load
 
@@ -77,22 +85,22 @@ npm install
 npm run build
 ```
 
-Then load the unpacked extension:
+Load the unpacked extension:
 
 1. Open `chrome://extensions`
 2. Enable **Developer mode**
 3. Click **Load unpacked** and select the `dist/` folder
 
-### Configure your key
+### Configure your provider
 
 1. Click the toolbar icon, then **Settings**
 2. Pick a provider, enter your **API base URL**, **API key**, and **model**
-3. Save — you'll be asked to grant the extension access to **only that origin**
+3. Save — Chrome will ask you to grant the extension access to **only that origin**
 
-Click the toolbar icon, then **Organize bookmarks** to start.
+Then click the toolbar icon and select **Organize bookmarks**.
 
 > [!TIP]
-> The extension ships with no install-time host permissions. The first time it talks to your provider's origin, Chrome asks you to grant access to that specific origin. Nothing is granted silently.
+> No host permissions are granted at install time. The first time the extension contacts your provider's origin, Chrome prompts you to approve that specific origin. Nothing is granted silently, and origins you never use are never touched.
 
 ### Scripts
 
@@ -102,6 +110,8 @@ Click the toolbar icon, then **Organize bookmarks** to start.
 | `npm run typecheck` | Type-check the project with `tsc` |
 | `npm run sync-models` | Refresh the model catalog used in Settings |
 | `npm run build-manifest` | Regenerate `manifest.json` from `manifest.template.json` |
+
+---
 
 ## Project layout
 
@@ -123,20 +133,22 @@ src/
 └── options/                Settings page
 ```
 
-## Tech stack
+### Tech stack
 
 | Layer | Technology |
 | --- | --- |
 | Language | TypeScript |
-| Tooling / bundler | Node.js + esbuild (`tsx` runs the TS build scripts) |
+| Bundler | Node.js + esbuild (`tsx` runs the TS build scripts) |
 | Platform | Chrome Manifest V3 |
-| AI | [`@earendil-works/pi-ai`](https://www.npmjs.com/package/@earendil-works/pi-ai) for multi-provider streaming + [Zod](https://zod.dev) for parse-time validation + TypeBox for tool-calling schemas |
-| UI | Vanilla DOM — no framework |
+| AI | [`@earendil-works/pi-ai`](https://www.npmjs.com/package/@earendil-works/pi-ai) — multi-provider streaming; [Zod](https://zod.dev) — parse-time validation; TypeBox — tool-calling schemas |
+| UI | Vanilla DOM, no framework |
+
+---
 
 ## Privacy
 
 - **Local-first.** No backend, no telemetry, no analytics.
-- **Bring your own key.** Your API key is stored in `chrome.storage.local` and is never synced.
+- **Bring your own key.** Your API key is stored in `chrome.storage.local` and is never synced to any server.
 - **Minimal payload.** Only bookmark **titles and URLs** are sent to your configured endpoint. Nothing else leaves your device.
-- **Explicit consent.** A first-run consent screen states exactly what is sent and where, before any run.
-- **Scoped permissions.** The extension ships with no install-time host permissions. Chrome asks you to grant access to your provider's origin the first time the extension needs to talk to it. Nothing is granted silently, and origins you never use are never touched.
+- **Explicit consent.** A first-run consent screen states exactly what is sent and where, before any data is transmitted.
+- **Scoped permissions.** No host permissions are granted at install time. Chrome asks you to grant access to your provider's origin the first time the extension needs to contact it. Nothing is granted silently, and origins you never use are never touched.
