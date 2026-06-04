@@ -17,6 +17,7 @@ const DEFAULT_SETTINGS: Settings = {
   taxonomyPrompt: "",
   consentAt: null,
   lastCleanupAt: null,
+  excludedFolders: [],
 };
 
 // One-shot migration from the pre-pi-ai settings shape (top-level baseUrl +
