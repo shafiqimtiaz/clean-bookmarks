@@ -18,7 +18,7 @@ Clean Bookmarks turns a messy bookmark collection into a clean, categorized fold
 There is **no backend, no account, and no data store of ours**. Your bookmarks stay in your browser, and the only thing that ever leaves your device is bookmark titles and URLs, sent to the AI endpoint **you** configure.
 
 > [!NOTE]
-> Ships with a built-in catalog of ~30 providers (OpenAI, Anthropic, Google Gemini, Mistral, DeepSeek, Groq, xAI, OpenRouter, Ollama, LM Studio, …) and a `Custom` mode for any other OpenAI-compatible endpoint. The browser runtime supports OpenAI, Anthropic, Google, Mistral, and OpenAI Responses.
+> Ships with a built-in catalog of 27 providers (OpenAI, Anthropic, Google, Mistral, DeepSeek, Groq, xAI, OpenRouter, Ollama, LM Studio, …) and a `Custom` mode for any other OpenAI-compatible endpoint. The browser runtime supports OpenAI, Anthropic, Google Gemini, and Mistral.
 
 ## Features
 

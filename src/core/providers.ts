@@ -1,12 +1,3 @@
-// Provider registry backed by the slim model list synced from
-// @earendil-works/pi-ai (see scripts/sync-models.ts). The UI reads from
-// here to populate the Settings dropdowns. The runtime uses these to
-// build a pi-ai Model object for the chosen provider/model.
-//
-// "custom" is a sentinel for arbitrary OpenAI-compatible endpoints
-// (Ollama, LM Studio, vLLM, LiteLLM, etc.). It's not in models.json —
-// users type baseUrl + model name directly.
-
 import REGISTRY from "./ai/models.json" with { type: "json" };
 
 export interface SlimModel {
@@ -30,8 +21,6 @@ export interface ProviderInfo {
   models: SlimModel[];
 }
 
-// Browser extension runtime supports a subset of pi-ai's APIs. Bedrock,
-// Vertex AI, and Azure are excluded (need cloud credentials we can't BYOK).
 export const SUPPORTED_APIS = new Set([
   "openai-completions",
   "openai-responses",
@@ -40,8 +29,6 @@ export const SUPPORTED_APIS = new Set([
   "mistral-conversations",
 ]);
 
-// Human-friendly labels for the dropdown. Order matters: this is the
-// display order in the Settings UI.
 const LABEL: Record<string, string> = {
   openai: "OpenAI",
   anthropic: "Anthropic",
@@ -112,7 +99,6 @@ export function getProviderBaseUrl(providerId: string): string | null {
   return getProvider(providerId)?.baseUrl ?? null;
 }
 
-// Resolve a stored baseUrl to a known provider id, or "custom" if unknown.
 export function providerForBaseUrl(baseUrl: string): { id: string; baseUrl: string } {
   const norm = baseUrl.replace(/\/$/, "");
   const id = KNOWN_BASEURLS[norm] ?? "custom";

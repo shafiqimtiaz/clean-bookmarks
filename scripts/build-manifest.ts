@@ -1,10 +1,3 @@
-#!/usr/bin/env bun
-// Generates manifest.json with the actual list of optional host
-// permissions (one entry per provider's baseUrl). Without this, Chrome
-// shows "Read and change all your data on websites you visit" at
-// install time, which scares users. With this, the user sees the
-// specific providers they can configure.
-
 import { readFileSync, writeFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { SUPPORTED_APIS } from "../src/core/providers";
@@ -26,22 +19,13 @@ const providers = Object.values(
 
 const origins = new Set<string>();
 for (const p of providers) {
-  // Skip providers whose every model uses an API the browser runtime
-  // can't load (Bedrock, Vertex, Azure, Cloudflare Workers AI, ...).
-  // The Settings UI hides these via isModelSupported, so listing their
-  // origins in optional_host_permissions is dead weight at install time.
   if (!p.models.some((m) => SUPPORTED_APIS.has(m.api))) continue;
   try {
     const u = new URL(p.baseUrl);
     origins.add(`${u.protocol}//${u.host}/*`);
   } catch {
-    // skip malformed
   }
 }
-// Always include the OpenAI-compatible custom-endpoint case. We don't
-// know the URL in advance, so Chrome must allow any https host the
-// extension might request. The runtime prompt still narrows to the
-// user-typed origin.
 const HOSTS = [...origins, "https://*/*"];
 
 const template = JSON.parse(readFileSync(TEMPLATE, "utf8")) as Record<
