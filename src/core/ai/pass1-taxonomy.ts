@@ -24,6 +24,7 @@ export async function proposeTaxonomy(
   bookmarks: FlatBookmark[],
   configSeeds: string[],
   folderHints: string[] = [],
+  excludedFolderNames: string[] = [],
 ): Promise<{
   taxonomy: Taxonomy;
   usage: { input: number; output: number; costUsd: number };
@@ -31,12 +32,15 @@ export async function proposeTaxonomy(
   // The user's edited prompt drives pass 1; fall back to the default.
   const promptBase = settings.taxonomyPrompt?.trim() || DEFAULT_TAXONOMY_PROMPT;
 
+  const excluded = new Set(excludedFolderNames);
+  const visibleHints = folderHints.filter((n) => !excluded.has(n));
+
   const parts: string[] = [];
   if (configSeeds.length)
     parts.push(`Required categories (keep as-is): ${configSeeds.join(", ")}.`);
-  if (folderHints.length)
+  if (visibleHints.length)
     parts.push(
-      `Existing folder names (merge/rename freely — they hint at the user's mental model): ${folderHints.join(", ")}.`,
+      `Existing folder names (merge/rename freely — they hint at the user's mental model): ${visibleHints.join(", ")}.`,
     );
   // "title | site/path" — the path segment is a cheap intent signal that
   // disambiguates generic titles (Home, Dashboard, Login).
