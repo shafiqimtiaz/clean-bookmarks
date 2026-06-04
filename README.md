@@ -15,7 +15,7 @@
 
 ## Overview
 
-Clean Bookmarks turns a messy bookmark collection into a clean, categorized folder tree. It scans the bookmarks you've tossed into the "junk drawer" — `Other Bookmarks` and loose items on the `Bookmarks Bar` — asks an AI to propose a category structure, lets you tune it, then sorts everything into place. One click and it's all back the way it was.
+Clean Bookmarks turns a messy bookmark collection into a clean, categorized folder tree. It scans the bookmarks piled into `Other Bookmarks` and the loose items on the `Bookmarks Bar`, asks an AI to propose a category structure, lets you tune it, then sorts everything into place. One click and it's all back the way it was.
 
 There is **no backend, no account, and no data store of ours**. Your bookmarks stay in your browser, and the only thing that ever leaves your device is bookmark titles and URLs, sent to the AI endpoint **you** configure.
 
@@ -26,6 +26,7 @@ There is **no backend, no account, and no data store of ours**. Your bookmarks s
 
 - **AI categorization in two passes** — the first pass proposes a taxonomy of 8–12 top-level categories (sub-categories only when 10+ bookmarks share a clear sub-theme); the second pass assigns every bookmark to the fixed taxonomy. Categories stay consistent across thousands of bookmarks.
 - **You stay in control** — review the proposed categories in the UI. Rename, remove, or add categories before anything is moved.
+- **Your prompt, your categories** — the prompt the AI uses to propose a taxonomy is editable in Settings. Override the default to bias the structure toward your work, hobbies, or folder shape. Reset with one click.
 - **Non-destructive** — the Bookmarks Bar and Other Bookmarks roots are never moved. Named folders inside them are flattened into the new category structure (and emptied); folders you mark as "exclude" are left exactly as they were.
 - **One-click undo** — the current bookmark layout is snapshotted before any change. A single click restores it.
 - **Bring your own key** — your API key is stored in `chrome.storage.local` and is never synced. The extension ships with no install-time host permissions; access to your endpoint is granted per-origin on first use.
