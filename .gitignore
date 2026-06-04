@@ -6,6 +6,7 @@ out
 dist
 manifest.json
 *.tgz
+*.zip
 
 # code coverage
 coverage
