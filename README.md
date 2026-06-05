@@ -1,7 +1,5 @@
 <div align="center">
-  <img src="public/icons/logo.png" alt="Clean Bookmarks" width="280" />
-
-  <h3>AI-powered bookmark organizer for Chromium. Local-first, bring-your-own-key.</h3>
+  <img src="public/promo/Generated%20Promo.png" alt="Clean Bookmarks" width="800" />
 
   [![Node.js](https://img.shields.io/badge/Node.js-%23339933.svg?style=flat-square&logo=nodedotjs&logoColor=white)](https://nodejs.org)
   [![TypeScript](https://img.shields.io/badge/TypeScript-3178C6.svg?style=flat-square&logo=typescript&logoColor=white)](https://www.typescriptlang.org)
