@@ -52,10 +52,11 @@ jobs:
           path: extension.zip
           retention-days: 14
 
-      - uses: puzzlers-labs/chrome-webstore-publish@v1
+      - uses: mobilefirstllc/cws-publish@latest
         with:
+          action: 'publish'
           extension_id: ${{ secrets.EXTENSION_ID }}
           client_id: ${{ secrets.CWS_CLIENT_ID }}
           client_secret: ${{ secrets.CWS_CLIENT_SECRET }}
           refresh_token: ${{ secrets.CWS_REFRESH_TOKEN }}
-          zip_file_path: extension.zip
+          zip_file: extension.zip
