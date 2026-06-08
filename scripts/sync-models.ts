@@ -19,10 +19,18 @@ interface FullModel {
   baseUrl: string;
   reasoning: boolean;
   input: string[];
-  cost: { input: number; output: number; cacheRead: number; cacheWrite: number };
+  cost: {
+    input: number;
+    output: number;
+    cacheRead: number;
+    cacheWrite: number;
+  };
   contextWindow: number;
   maxTokens: number;
-  compat?: { supportsDeveloperRole?: boolean; supportsReasoningEffort?: boolean };
+  compat?: {
+    supportsDeveloperRole?: boolean;
+    supportsReasoningEffort?: boolean;
+  };
 }
 
 interface SlimModel {
@@ -47,7 +55,23 @@ interface ProviderInfo {
 
 type Registry = Record<string, ProviderInfo>;
 
-const EXCLUDED_PROVIDERS = new Set(["amazon-bedrock", "huggingface"]);
+// Allowlist of first-party, key-based, browser-reachable providers. Excludes
+// aggregators, OAuth-only, and regional dupes; vendor-overrides.json re-adds others.
+const INCLUDED_PROVIDERS = new Set([
+  "anthropic",
+  "openai",
+  "google",
+  "mistral",
+  "deepseek",
+  "groq",
+  "cerebras",
+  "xai",
+  "together",
+  "fireworks",
+  "moonshotai",
+  "minimax",
+  "zai",
+]);
 
 const SUPPORTED_APIS = new Set([
   "openai-completions",
@@ -57,11 +81,13 @@ const SUPPORTED_APIS = new Set([
   "mistral-conversations",
 ]);
 
-const mod = (await import(SOURCE)) as { MODELS: Record<string, Record<string, FullModel>> };
+const mod = (await import(SOURCE)) as {
+  MODELS: Record<string, Record<string, FullModel>>;
+};
 const out: Registry = {};
 
 for (const [providerId, models] of Object.entries(mod.MODELS)) {
-  if (EXCLUDED_PROVIDERS.has(providerId)) continue;
+  if (!INCLUDED_PROVIDERS.has(providerId)) continue;
   const slim: SlimModel[] = Object.values(models)
     .filter((m) => SUPPORTED_APIS.has(m.api))
     .map((m) => ({

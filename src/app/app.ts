@@ -8,11 +8,7 @@ import {
   type ReadScopeResult,
 } from "../core/messaging";
 import { hasHostPermission, requestHostPermission } from "../core/permissions";
-import {
-  getProviders,
-  getProvider,
-  getModel,
-} from "../core/providers";
+import { getProviders, getProvider, getModel } from "../core/providers";
 import { complete } from "../core/ai/provider";
 import { DEFAULT_TAXONOMY_PROMPT } from "../core/ai/pass1-taxonomy";
 import { UNSORTED_FOLDER } from "../core/types";
@@ -22,8 +18,7 @@ const $ = <T extends HTMLElement>(id: string) =>
   document.getElementById(id) as T;
 const show = (id: string, on = true) => ($(id).hidden = !on);
 
-// Any unhandled error (bad API key, network, parse failure) must surface on
-// the error screen — never leave the UI frozen on a hidden spinner.
+// Surface any unhandled error on the error screen, never a frozen spinner.
 const guard = (fn: () => Promise<void>) => () => {
   fn().catch((e: unknown) => fail(e instanceof Error ? e.message : String(e)));
 };
@@ -34,8 +29,7 @@ let folderNames: string[] = [];
 
 const ALL = getProviders();
 
-// Two-letter monogram for the status strip + provider tiles. Multi-word
-// labels -> initials; single word -> first two letters.
+// 2-letter monogram for the status strip + provider tiles.
 function monogram(label: string): string {
   const clean = label.replace(/\(.*?\)/g, "").trim();
   const words = clean.split(/\s+/).filter(Boolean);
@@ -49,7 +43,7 @@ function monogram(label: string): string {
   return m.toUpperCase() || "··";
 }
 
-// ── Theme ─────────────────────────────────────────────────────
+// ── Theme ──
 const sunSVG =
   '<svg viewBox="0 0 24 24" fill="none" stroke="var(--themeicon)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:22px;height:22px"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M19.1 4.9 17 7M7 17l-2.1 2.1"></path></svg>';
 const moonSVG =
@@ -80,7 +74,7 @@ document
 // Version badge.
 $("version").textContent = "v" + chrome.runtime.getManifest().version;
 
-// ── Settings page navigation ──────────────────────────────────
+// ── Settings page navigation ──
 const sview = $("settingsView");
 function openSettingsView() {
   sview.classList.add("open");
@@ -102,7 +96,7 @@ document.addEventListener("keydown", (e) => {
     closeSettingsView();
 });
 
-// ── Boot / home ───────────────────────────────────────────────
+// ── Boot / home ──
 async function boot() {
   const settings = await getSettings();
   await renderStatus(settings);
@@ -237,7 +231,7 @@ $("consentBtn").addEventListener(
   }),
 );
 
-// ── Run flow ──────────────────────────────────────────────────
+// ── Run flow ──
 $("runBtn").addEventListener(
   "click",
   guard(async () => {
@@ -324,7 +318,6 @@ $("applyBtn").addEventListener(
   }),
 );
 
-
 $("doneBtn").addEventListener("click", () => {
   chrome.tabs.getCurrent((tab) =>
     tab?.id ? chrome.tabs.remove(tab.id) : window.close(),
@@ -404,10 +397,8 @@ function renderPreview(assignments: Assignment[]) {
   tree.appendChild(ul);
 }
 
-// ── Preview hover popup (portal) ───────────────────────────────
-// Lives on <body> so the card's overflow can't clip it. A short hide delay
-// bridges the gap between row and popup so the popup stays open when the
-// cursor moves onto it — needed to scroll long lists.
+// ── Preview popup (portal) ──
+// On <body> so card overflow can't clip it; hide delay bridges row→popup.
 let previewPopup: HTMLElement | null = null;
 let popupHideTimer: number | undefined;
 
@@ -428,7 +419,7 @@ function scheduleHidePopup() {
   }, 120);
 }
 
-// Place below the row, flipping above / clamping to the viewport on overflow.
+// Place below the row; flip above / clamp to viewport on overflow.
 function positionPopup(pop: HTMLElement, anchor: HTMLElement) {
   pop.style.left = "0px";
   pop.style.top = "0px";
@@ -467,10 +458,7 @@ function attachPreviewPopup(li: HTMLElement, name: string, titles: string[]) {
   li.addEventListener("mouseleave", scheduleHidePopup);
 }
 
-// Determinate phases (pass2) update the bar per batch with real token counts.
-// Opaque phases (reading/pass1/applying) are single AI calls with no
-// mid-flight signal — a fake fixed % and a "~0 tokens" readout are misleading,
-// so those run an indeterminate bar with a meaningful count-based label.
+// Determinate (pass2) = real batch %; opaque phases use an indeterminate bar.
 function setProgress(determinate: boolean, text: string, pct = 0) {
   const bar = $("progressBar") as HTMLElement;
   const wrap = bar.parentElement as HTMLElement;
@@ -514,20 +502,15 @@ function fail(error: string) {
   show("result");
 }
 
-// ── Settings panel ────────────────────────────────────────────
+// ── Settings panel ──
 let keys: Record<string, string> = {};
 let currentProvider = "openai";
 
 const provGrid = $("provGrid");
 const provSearch = $<HTMLInputElement>("provSearch");
-const baseUrl = $<HTMLInputElement>("baseUrl");
-const editBaseUrl = $<HTMLButtonElement>("editBaseUrl");
 const apiKeyInput = $<HTMLInputElement>("apiKey");
 const modelSelect = $<HTMLSelectElement>("modelSelect");
-const modelCustom = $<HTMLInputElement>("modelCustom");
 const prompt = $<HTMLTextAreaElement>("prompt");
-
-const OTHER_MODEL = "__other__";
 
 const checkSVG =
   '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"></path></svg>';
@@ -542,12 +525,6 @@ function setResultIcon(kind: "ok" | "err") {
 const saved = $("saved");
 const testStatus = $("testStatus");
 
-function lockBaseUrl(locked: boolean) {
-  baseUrl.disabled = locked;
-  editBaseUrl.hidden = !locked;
-  editBaseUrl.classList.toggle("on", !locked);
-}
-
 function fillModels(providerId: string, selected?: string) {
   const preset = getProvider(providerId);
   const models = preset?.models ?? [];
@@ -558,37 +535,15 @@ function fillModels(providerId: string, selected?: string) {
     opt.textContent = m.name && m.name !== m.id ? `${m.name} (${m.id})` : m.id;
     modelSelect.appendChild(opt);
   }
-  const other = document.createElement("option");
-  other.value = OTHER_MODEL;
-  other.textContent = "Other (type manually)…";
-  modelSelect.appendChild(other);
-
-  // Selected model present in the list -> pick it; otherwise fall into the
-  // free-text "Other" path (custom providers, unlisted ids).
-  const inList = selected && models.some((m) => m.id === selected);
-  if (inList) {
-    modelSelect.value = selected!;
-    modelCustom.value = "";
-  } else {
-    modelSelect.value = OTHER_MODEL;
-    modelCustom.value = selected ?? "";
-  }
-  syncCustomModel();
+  // Keep the saved model if still listed; else default to the first.
+  modelSelect.value =
+    selected && models.some((m) => m.id === selected)
+      ? selected
+      : (models[0]?.id ?? "");
 }
-
-function syncCustomModel() {
-  modelCustom.hidden = modelSelect.value !== OTHER_MODEL;
-}
-
-modelSelect.addEventListener("change", () => {
-  syncCustomModel();
-  if (modelSelect.value === OTHER_MODEL) modelCustom.focus();
-});
 
 function chosenModel(): string {
-  return (
-    modelSelect.value === OTHER_MODEL ? modelCustom.value : modelSelect.value
-  ).trim();
+  return modelSelect.value.trim();
 }
 
 function renderProviderGrid(filter = "") {
@@ -611,9 +566,7 @@ function selectProvider(id: string) {
   currentProvider = id;
   apiKeyInput.value = keys[id] ?? "";
   const preset = getProvider(id);
-  if (preset) baseUrl.value = preset.baseUrl;
   fillModels(id, preset?.models[0]?.id);
-  lockBaseUrl(true);
   renderProviderGrid(provSearch.value);
   resetTestStatus();
 }
@@ -621,11 +574,6 @@ function selectProvider(id: string) {
 provSearch.addEventListener("input", () =>
   renderProviderGrid(provSearch.value),
 );
-
-editBaseUrl.addEventListener("click", () => {
-  lockBaseUrl(false);
-  baseUrl.focus();
-});
 
 $("toggleKey").addEventListener("click", () => {
   apiKeyInput.type = apiKeyInput.type === "password" ? "text" : "password";
@@ -641,7 +589,7 @@ function formSettings(base: Settings): Settings {
     ...base,
     provider: currentProvider,
     model: chosenModel() || base.model,
-    baseUrl: baseUrl.value.trim(),
+    baseUrl: getProvider(currentProvider)?.baseUrl ?? base.baseUrl,
     apiKey: apiKeyInput.value.trim(),
   };
 }
@@ -695,24 +643,21 @@ async function initSettings() {
   resetTestStatus();
   const s = await getSettings();
   const providerId = s.provider;
-  const p = getProvider(providerId);
   keys = { ...s.apiKeys };
   if (s.apiKey && !keys[providerId]) keys[providerId] = s.apiKey;
   currentProvider = providerId;
   provSearch.value = "";
   renderProviderGrid();
-  baseUrl.value = s.baseUrl || p?.baseUrl || "";
   apiKeyInput.value = keys[providerId] ?? "";
   apiKeyInput.type = "password";
   fillModels(providerId, s.model);
   prompt.value = s.taxonomyPrompt || DEFAULT_TAXONOMY_PROMPT;
-  lockBaseUrl(!s.baseUrl);
 }
 
 $("saveSettings").addEventListener("click", async () => {
-  const url = baseUrl.value.trim();
   const id = currentProvider;
-  const model = chosenModel() || "MiniMax-M3";
+  const url = getProvider(id)?.baseUrl ?? "";
+  const model = chosenModel();
   const tentative: Settings = {
     ...(await getSettings()),
     provider: id,

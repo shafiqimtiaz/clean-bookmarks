@@ -15,11 +15,8 @@ Rules:
 
 export const DEFAULT_TAXONOMY_PROMPT = SYSTEM;
 
-// Pass 1: read all bookmarks and propose a taxonomy. Uses tool calling
-// (propose_taxonomy) so the response is structured and TypeBox-validated.
-// `configSeeds` = user's explicitly configured seed categories
-// (guaranteed to survive). `folderHints` = auto-detected existing folder
-// names (advisory only — AI may merge/rename).
+// Pass 1: propose a taxonomy via tool call. configSeeds always survive;
+// folderHints are advisory.
 export async function proposeTaxonomy(
   settings: Settings,
   bookmarks: FlatBookmark[],
@@ -30,7 +27,7 @@ export async function proposeTaxonomy(
   taxonomy: Taxonomy;
   usage: { input: number; output: number; costUsd: number };
 }> {
-  // The user's edited prompt drives pass 1; fall back to the default.
+  // User's edited prompt drives pass 1; else the default.
   const promptBase = settings.taxonomyPrompt?.trim() || DEFAULT_TAXONOMY_PROMPT;
 
   const excluded = new Set(excludedFolderNames);
@@ -43,8 +40,7 @@ export async function proposeTaxonomy(
     parts.push(
       `Existing folder names (merge/rename freely — they hint at the user's mental model): ${visibleHints.join(", ")}.`,
     );
-  // "title | site/path" — the path segment is a cheap intent signal that
-  // disambiguates generic titles (Home, Dashboard, Login).
+  // "title | site/path" — the path is a cheap intent signal.
   const list = bookmarks
     .map((b) => `${b.title} | ${siteHint(b.url)}`)
     .join("\n");
@@ -53,8 +49,7 @@ export async function proposeTaxonomy(
   let raw: unknown = null;
   let usage = { input: 0, output: 0, costUsd: 0 };
 
-  // Try the tool call first. If the model didn't call the tool (some
-  // smaller models ignore it), fall back to prompt-JSON + parseJson.
+  // Tool call first; fall back to parsing prose JSON if the model ignores it.
   for (let attempt = 0; attempt < 2; attempt++) {
     const result = await complete(settings, {
       systemPrompt:
@@ -86,9 +81,7 @@ export async function proposeTaxonomy(
       break;
     }
 
-    // Fallback: many models (esp. reasoning models) ignore the tool and reply
-    // with prose or ```json-fenced JSON. The tolerant parser strips fences and
-    // extracts the embedded object; strict JSON.parse can't.
+    // Some models reply with prose or fenced JSON, not a tool call; parse tolerantly.
     const text = result.content
       .filter((b): b is { type: "text"; text: string } => b.type === "text")
       .map((b) => b.text)
@@ -99,7 +92,7 @@ export async function proposeTaxonomy(
         raw = obj;
         break;
       }
-      // else: retry with stricter instruction
+      // else retry with the stricter instruction
     }
   }
 
@@ -118,7 +111,7 @@ export async function proposeTaxonomy(
     children: c.children,
   }));
 
-  // Strip children that look like individual bookmark names, not sub-categories.
+  // Drop children that are really bookmark names, not sub-categories.
   const titleSet = new Set(bookmarks.map((b) => b.title.toLowerCase()));
   const hostSet = new Set(
     bookmarks.map((b) => hostOf(b.url).toLowerCase()).filter(Boolean),
@@ -133,7 +126,7 @@ export async function proposeTaxonomy(
       return true;
     });
   }
-  // Only guarantee explicitly configured seeds survive — folder hints are advisory.
+  // Only configured seeds are guaranteed; folder hints are advisory.
   const have = new Set(taxonomy.map((c) => c.name.toLowerCase()));
   for (const s of configSeeds) {
     if (!have.has(s.toLowerCase())) taxonomy.push({ name: s, children: [] });
@@ -150,8 +143,7 @@ function hostOf(url: string): string {
   }
 }
 
-// host + first path segment when it carries signal (short, not a file/id).
-// e.g. "github.com/tailwindlabs", "developer.mozilla.org/en-US".
+// host + first meaningful path segment (e.g. github.com/tailwindlabs).
 function siteHint(url: string): string {
   try {
     const u = new URL(url);
