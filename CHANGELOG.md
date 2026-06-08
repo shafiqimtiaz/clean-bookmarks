@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [1.1.0] - 2026-06-08
+
+### Changed
+
+- **Provider registry driven by an explicit allowlist.** `scripts/sync-models.ts` now restricts output to first-party, key-based, browser-reachable providers (13 total: Anthropic, OpenAI, Google, Mistral, DeepSeek, Groq, Cerebras, xAI, Together, Fireworks, Moonshot, MiniMax, Z.AI), covering 185 models across 5 native APIs (Anthropic Messages, Google Generative AI, Mistral, OpenAI Responses, and OpenAI-compatible).
+- **Settings UI simplified.** The API Base URL is always derived from the provider registry; the model picker is a fixed dropdown sourced from the registry.
+- **Saved model fallback.** If the saved model id is no longer in the provider's model list, the picker now defaults to the provider's first listed model.
+- **Model catalog refreshed.** DeepSeek, Fireworks, Google, and Groq entries updated with current model ids, context windows, costs, and capability flags.
+- **Tree items use responsive horizontal padding.**
+
+[1.1.0]: https://github.com/shafiq-imtiaz/clean-bookmarks/compare/v1.0.0...v1.1.0
+
 ## [0.0.0.1] - 2026-06-04
 
 First public release. Manifest v3 Chrome extension that organizes bookmarks with

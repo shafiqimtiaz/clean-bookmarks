@@ -20,7 +20,7 @@ Clean Bookmarks turns a messy bookmark collection into a clean, categorized fold
 No backend. No account. No data store. Your bookmarks stay in your browser; the only thing that ever leaves your device is bookmark titles and URLs, sent to the AI endpoint **you** configure.
 
 > [!NOTE]
-> Ships with a built-in catalog of 27 providers — OpenAI, Anthropic, Google Gemini, Mistral, DeepSeek, Groq, xAI, OpenRouter, Ollama, LM Studio, and more — plus a `Custom` mode for any OpenAI-compatible endpoint. The browser runtime supports OpenAI, Anthropic, Google Gemini, and Mistral natively.
+> Ships with a curated catalog of 13 first-party, key-based providers — Anthropic, OpenAI, Google Gemini, Mistral, DeepSeek, Groq, Cerebras, xAI, Together, Fireworks, Moonshot (Kimi), MiniMax, and Z.AI — across 5 native APIs (Anthropic Messages, Google Generative AI, Mistral, OpenAI Responses, and OpenAI-compatible). Aggregators, OAuth-only services, and local-only runtimes (Ollama, LM Studio) are intentionally excluded.
 
 ---
 
@@ -92,7 +92,7 @@ Load the unpacked extension:
 ### Configure your provider
 
 1. Click the toolbar icon, then **Settings**
-2. Pick a provider, enter your **API base URL**, **API key**, and **model**
+2. Pick a provider, enter your **API key**, and choose a **model**
 3. Save — Chrome will ask you to grant the extension access to **only that origin**
 
 Then click the toolbar icon and select **Organize bookmarks**.
