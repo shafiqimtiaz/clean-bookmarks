@@ -905,7 +905,7 @@ ul.tree > li:hover {
   gap: 18px;
   background: var(--bg);
   border-bottom: 4px solid var(--line);
-  padding: 18px 40px;
+  padding: 18px max(40px, calc((100% - 800px) / 2));
 }
 .back {
   display: inline-flex;
