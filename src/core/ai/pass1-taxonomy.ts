@@ -1,4 +1,5 @@
-import { taxonomyTool, TAXONOMY_HINT } from "./schema";
+import { taxonomyTool, TAXONOMY_HINT, taxonomySchema } from "./schema";
+import { parseJson } from "./parse-json";
 import { complete } from "./provider";
 import type { ToolCall } from "@earendil-works/pi-ai";
 import type { FlatBookmark, Settings, Taxonomy } from "../types";
@@ -85,23 +86,20 @@ export async function proposeTaxonomy(
       break;
     }
 
-    // Fallback: try to parse text content as JSON.
+    // Fallback: many models (esp. reasoning models) ignore the tool and reply
+    // with prose or ```json-fenced JSON. The tolerant parser strips fences and
+    // extracts the embedded object; strict JSON.parse can't.
     const text = result.content
       .filter((b): b is { type: "text"; text: string } => b.type === "text")
       .map((b) => b.text)
       .join("\n");
     if (text) {
-      // Reuse the tolerant parser — but with a runtime-shaped validator.
-      // We accept the structure even if TypeBox didn't pre-validate.
-      try {
-        const obj = JSON.parse(text);
-        if (obj && Array.isArray(obj.categories)) {
-          raw = obj;
-          break;
-        }
-      } catch {
-        // retry with stricter instruction
+      const obj = parseJson(text, taxonomySchema);
+      if (obj) {
+        raw = obj;
+        break;
       }
+      // else: retry with stricter instruction
     }
   }
 

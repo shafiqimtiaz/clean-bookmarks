@@ -1,6 +1,11 @@
 import { z } from "zod";
 import { Type, type Tool } from "@earendil-works/pi-ai";
 
+// MV3 CSP forbids `new Function`/eval. Zod v4's JIT (and the eval probe that
+// detects it) trips a securitypolicyviolation that floods the extension's
+// Errors page. Disable the JIT so Zod uses its interpreted parse path.
+z.config({ jitless: true });
+
 // Zod schemas are still used for parse-time validation on pass 2 (which
 // returns JSON in a text block). Pass 1 returns structured args via tool
 // calling and is validated by TypeBox at the tool boundary.
@@ -9,7 +14,7 @@ export const taxonomySchema = z.object({
   categories: z.array(
     z.object({
       name: z.string(),
-      children: z.array(z.string()),
+      children: z.array(z.string()).optional(),
     }),
   ),
 });
