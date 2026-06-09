@@ -10,7 +10,6 @@ on:
         description: 'Extension version (e.g. 0.0.0.2)'
         required: true
         type: string
-        pattern: '^\d+\.\d+\.\d+(\.\d+)?$'
 
 jobs:
   publish:
@@ -21,6 +20,10 @@ jobs:
       group: publish
       cancel-in-progress: false
     steps:
+      - name: Validate version format
+        if: github.event_name == 'workflow_dispatch'
+        run: echo "${{ inputs.version }}" | grep -E '^\d+\.\d+\.\d+(\.\d+)?$'
+
       - uses: actions/checkout@v4
 
       - uses: actions/setup-node@v4
