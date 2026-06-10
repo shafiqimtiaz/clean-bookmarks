@@ -290,7 +290,6 @@ export async function checkDeviceCompatibility(): Promise<DeviceCompatibility> {
   // See: https://developer.chrome.com/docs/ai/prompt-api#review-the-hardware-requirements
   const osOk =
     os === "Windows 10/11" ||
-    os === "Windows (older)" ||
     os === "macOS" ||
     os === "Linux" ||
     os === "ChromeOS";

@@ -4,13 +4,14 @@
 // the specific origin when settings are saved.
 
 import type { Settings } from "./types";
+import { CHROME_AI_PROVIDER_ID } from "./ai/chrome-ai";
 
 // Returns the origin pattern to request. The user's stored baseUrl is the
 // source of truth — the UI pre-fills it from the provider registry when
-// a browser provider is selected, but the user can override via "Edit base URL".
+// a provider is selected, but the user can override via "Edit base URL".
 export function originForSettings(settings: Settings): string | null {
   // Chrome browser AI runs on-device — there is no host to grant.
-  if (settings.provider === "chrome-ai") return null;
+  if (settings.provider === CHROME_AI_PROVIDER_ID) return null;
   const base = settings.baseUrl;
   if (!base) return null;
   try {
@@ -33,7 +34,7 @@ export function originPattern(baseUrl: string): string | null {
 export async function hasHostPermission(settings: Settings): Promise<boolean> {
   // The on-device model needs no host permission — we are "connected" by
   // construction, regardless of the Prompt API's availability state.
-  if (settings.provider === "chrome-ai") return true;
+  if (settings.provider === CHROME_AI_PROVIDER_ID) return true;
   const origin = originForSettings(settings);
   if (!origin) return false;
   return chrome.permissions.contains({ origins: [origin] });

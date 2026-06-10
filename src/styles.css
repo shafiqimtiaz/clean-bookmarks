@@ -1235,10 +1235,6 @@ html[data-theme="dark"] .tile .nm {
   border-radius: var(--r);
   pointer-events: none;
 }
-.tile {
-  position: relative;
-}
-
 /* Device compatibility report for Browser Model */
 #deviceCompat {
   margin-top: 16px;

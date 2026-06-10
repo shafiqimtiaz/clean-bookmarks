@@ -90,9 +90,7 @@ function openSettingsView() {
   sview.classList.add("open");
   sview.scrollTop = 0;
   document.body.style.overflow = "hidden";
-  // Feature-detect Chrome browser AI before populating the provider
-  // grid — the tile is only shown when the API is exposed by the runtime.
-  void refreshChromeAiDetection().then(() => initSettings());
+  void initSettings();
 }
 
 async function refreshChromeAiDetection(): Promise<void> {
@@ -531,7 +529,7 @@ function fail(error: string) {
 // runtime. (We don't gate on LanguageModel.availability() at boot — the
 // status is surfaced through the status strip / Test button instead.)
 function isProviderConfigured(s: Settings): boolean {
-  if (s.provider === CHROME_AI_PROVIDER_ID) return true;
+  if (s.provider === CHROME_AI_PROVIDER_ID) return hasChromeAiApi();
   return !!s.apiKey;
 }
 
@@ -626,38 +624,100 @@ function applyLocalProviderChrome(): void {
 function renderDeviceReport(report: DeviceCompatibility): void {
   const el = $("deviceCompat");
   el.hidden = false;
-  // Build a compact table: label : detected (required) — pass/ fail icon.
-  const rowsHtml = report.rows.map((r) => {
-    const cls = r.pass === true ? "ok" : r.pass === false ? "err" : "unk";
-    const ico = r.pass === true ? "✓" : r.pass === false ? "✗" : "—";
-    return '<div class="cpt-row ' + cls + '"><span class="cpt-ico">' + ico + '</span><span class="cpt-label">' + r.label + '</span><span class="cpt-detected">' + r.detected + '</span><span class="cpt-required">' + r.required + '</span></div>';
-  }).join("");
+  el.replaceChildren();
   const verdict = report.overall === "pass" ? "Ready" : report.overall === "fail" ? "Incompatible" : report.overall === "partial" ? "Check required" : "Unknown";
   const stampCls = report.overall === "pass" ? "ok" : report.overall === "fail" ? "err" : "warn";
-  let extra = '';
+  const head = document.createElement("div");
+  head.className = "cpt-head";
+  const title = document.createElement("span");
+  title.className = "cpt-title";
+  title.textContent = "Device Compatibility";
+  const stamp = document.createElement("span");
+  stamp.className = "cpt-stamp " + stampCls;
+  stamp.textContent = verdict;
+  head.append(title, stamp);
+  el.appendChild(head);
+
+  // Build a compact table: label : detected (required) — pass/ fail icon.
+  for (const row of report.rows) {
+    const cls = row.pass === true ? "ok" : row.pass === false ? "err" : "unk";
+    const ico = row.pass === true ? "✓" : row.pass === false ? "✗" : "—";
+    const rowEl = document.createElement("div");
+    rowEl.className = "cpt-row " + cls;
+
+    const iconEl = document.createElement("span");
+    iconEl.className = "cpt-ico";
+    iconEl.textContent = ico;
+    const labelEl = document.createElement("span");
+    labelEl.className = "cpt-label";
+    labelEl.textContent = row.label;
+    const detectedEl = document.createElement("span");
+    detectedEl.className = "cpt-detected";
+    detectedEl.textContent = row.detected;
+    const requiredEl = document.createElement("span");
+    requiredEl.className = "cpt-required";
+    requiredEl.textContent = row.required;
+
+    rowEl.append(iconEl, labelEl, detectedEl, requiredEl);
+    el.appendChild(rowEl);
+  }
+
   if (report.flagsMissing) {
-    extra = ''
-      + '<div class="cpt-fix">'
-      + '<p class="help" style="margin: 10px 0 8px; color: var(--danger); font-weight: 600">Chrome flags need to be enabled</p>'
-      + '<button class="btn-flag" data-flag="optimization-guide-on-device-model">Enable on-device model</button> '
-      + '<button class="btn-flag" data-flag="prompt-api-for-gemini-nano">Enable Prompt API</button>'
-      + '<p class="help" style="margin: 8px 0 0; font-size: 10px">Opens <code>chrome://flags/</code> pages. Set each flag to <b>Enabled</b> and relaunch.</p>'
-      + '</div>';
-  }
-  if (report.gpuNote) {
-    extra += '<div class="cpt-fix"><p class="help" style="margin: 10px 0 8px; color: var(--warning)">' + report.gpuNote + '</p></div>';
-  }
-  el.innerHTML = '<div class="cpt-head"><span class="cpt-title">Device Compatibility</span><span class="cpt-stamp ' + stampCls + '">' + verdict + '</span></div>' + rowsHtml + extra;
-  // Wire flag buttons.
-  const flagBtns = el.querySelectorAll('.btn-flag');
-  for (let i = 0; i < flagBtns.length; i++) {
-    const btn = flagBtns[i] as HTMLElement;
-    const flag = btn.getAttribute('data-flag');
-    if (flag) {
-      btn.addEventListener('click', function () {
-        chrome.tabs.create({ url: 'chrome://flags/#' + encodeURIComponent(flag) });
+    const fix = document.createElement("div");
+    fix.className = "cpt-fix";
+
+    const warn = document.createElement("p");
+    warn.className = "help";
+    warn.style.margin = "10px 0 8px";
+    warn.style.color = "var(--danger)";
+    warn.style.fontWeight = "600";
+    warn.textContent = "Chrome flags need to be enabled";
+
+    const modelBtn = document.createElement("button");
+    modelBtn.className = "btn-flag";
+    modelBtn.dataset.flag = "optimization-guide-on-device-model";
+    modelBtn.textContent = "Enable on-device model";
+    modelBtn.addEventListener("click", () => {
+      chrome.tabs.create({
+        url:
+          "chrome://flags/#" +
+          encodeURIComponent(modelBtn.dataset.flag ?? ""),
       });
-    }
+    });
+
+    const promptBtn = document.createElement("button");
+    promptBtn.className = "btn-flag";
+    promptBtn.dataset.flag = "prompt-api-for-gemini-nano";
+    promptBtn.textContent = "Enable Prompt API";
+    promptBtn.addEventListener("click", () => {
+      chrome.tabs.create({
+        url:
+          "chrome://flags/#" +
+          encodeURIComponent(promptBtn.dataset.flag ?? ""),
+      });
+    });
+
+    const note = document.createElement("p");
+    note.className = "help";
+    note.style.margin = "8px 0 0";
+    note.style.fontSize = "10px";
+    note.textContent =
+      "Opens chrome://flags/ pages. Set each flag to Enabled and relaunch.";
+
+    fix.append(warn, modelBtn, document.createTextNode(" "), promptBtn, note);
+    el.appendChild(fix);
+  }
+
+  if (report.gpuNote) {
+    const fix = document.createElement("div");
+    fix.className = "cpt-fix";
+    const note = document.createElement("p");
+    note.className = "help";
+    note.style.margin = "10px 0 8px";
+    note.style.color = "var(--warning)";
+    note.textContent = report.gpuNote;
+    fix.appendChild(note);
+    el.appendChild(fix);
   }
 }
 

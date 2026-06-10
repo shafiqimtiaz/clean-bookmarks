@@ -79,7 +79,7 @@ const FALLBACK_PROVIDER_ID = Object.keys(
 )[0] ?? "openai";
 
 // Virtual provider entry for Chrome browser Prompt API (Gemini Nano).
-// Not in models.json: it has no baseUrl, no api, and isn't selectable in
+// Not in models.json: it has no baseUrl and isn't selectable in
 // every environment. The Settings UI feature-detects the runtime global
 // before showing the tile.
 const CHROME_AI_PROVIDER: ProviderInfo = {
