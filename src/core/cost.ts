@@ -17,6 +17,8 @@ export interface CostEstimate {
 }
 
 function pricingFor(settings: Settings): { in: number; out: number } {
+  // Chrome browser model is free to run.
+  if (settings.provider === "chrome-ai") return { in: 0, out: 0 };
   if (!settings.apiKey) {
     return { in: 0, out: 0 };
   }

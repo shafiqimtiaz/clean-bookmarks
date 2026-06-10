@@ -8,9 +8,19 @@
 
 import type { Model, Context, AssistantMessage } from "@earendil-works/pi-ai";
 import { getModel } from "../providers";
+import { completeChromeAi, CHROME_AI_PROVIDER_ID } from "./chrome-ai";
 import type { Settings } from "../types";
 
 export function buildModel(settings: Settings): Model<string> {
+  // Chrome browser Prompt API — virtual provider, no pi-ai Model object.
+  // Caller shouldn't reach buildModel for this path; guard anyway.
+  if (settings.provider === CHROME_AI_PROVIDER_ID) {
+    throw new Error(
+      "buildModel() is not valid for the browser Chrome AI provider. " +
+        "Use complete() — it dispatches to the Prompt API directly.",
+    );
+  }
+
   const userBaseUrl = settings.baseUrl?.replace(/\/$/, "");
   const slim = getModel(settings.provider, settings.model);
   if (!slim) {
@@ -91,6 +101,12 @@ export async function complete(
   context: Context,
   options: CompleteOptions = {},
 ): Promise<AssistantMessage> {
+  // Chrome browser Prompt API. Bypasses the pi-ai registry: no host
+  // permission, no API key, model runs on-device. Cost is $0.
+  if (settings.provider === CHROME_AI_PROVIDER_ID) {
+    return completeChromeAi(settings, context, options);
+  }
+
   const model = buildModel(settings);
   const streamFn = await getStreamFn(model.api as string);
   const stream = streamFn(model, context, {

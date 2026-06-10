@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Added
+
+- **Chrome browser AI support.** When the extension is loaded in Chrome (and the Prompt API for Gemini Nano is enabled in `chrome://flags`), a "Browser Model" tile appears in the provider grid with a prominent coral sparkle avatar. Selecting it runs the on-device Gemini Nano model — no API key, no host permission, no per-run cost. The on-device tile is hidden on browsers that don't expose the `LanguageModel` global. A live status hint under the model picker reports the current state (`available` / `downloadable` / `downloading` / `unavailable` / `unsupported`).
+
+### Changed
+
+- **Provider gate is now provider-aware.** The first-run consent screen and the toolbar popup no longer require an API key when the user has selected the browser Chrome AI provider.
+- **Status strip distinguishes local from cloud.** The connection pill reads "On-device" when Chrome's browser model is the active provider, "Connected" when a cloud key has the right host permission, and "No access" / "No key" otherwise.
+
 ## [1.1.0] - 2026-06-08
 
 ### Changed

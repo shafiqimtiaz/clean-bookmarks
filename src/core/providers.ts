@@ -1,4 +1,8 @@
 import REGISTRY from "./ai/models.json" with { type: "json" };
+import {
+  CHROME_AI_MODEL_ID,
+  CHROME_AI_PROVIDER_ID,
+} from "./ai/chrome-ai";
 
 export interface SlimModel {
   id: string;
@@ -19,6 +23,8 @@ export interface ProviderInfo {
   label: string;
   baseUrl: string;
   models: SlimModel[];
+  /** Local-only: runs on-device, no host permission, no API key. */
+  local?: boolean;
 }
 
 export const SUPPORTED_APIS = new Set([
@@ -72,13 +78,44 @@ const FALLBACK_PROVIDER_ID = Object.keys(
   REGISTRY as unknown as Record<string, ProviderInfo>,
 )[0] ?? "openai";
 
+// Virtual provider entry for Chrome browser Prompt API (Gemini Nano).
+// Not in models.json: it has no baseUrl, no api, and isn't selectable in
+// every environment. The Settings UI feature-detects the runtime global
+// before showing the tile.
+const CHROME_AI_PROVIDER: ProviderInfo = {
+  id: CHROME_AI_PROVIDER_ID,
+  label: "Browser Model",
+  baseUrl: "",
+  local: true,
+  models: [
+    {
+      id: CHROME_AI_MODEL_ID,
+      name: "Gemini Nano (on-device)",
+      api: "chrome-ai",
+      provider: CHROME_AI_PROVIDER_ID,
+      baseUrl: "",
+      contextWindow: 0, // Reported by session.inputQuota at runtime
+      maxTokens: 0,
+      reasoning: false,
+      input: ["text"],
+      cost: { in: 0, out: 0, cacheRead: 0, cacheWrite: 0 },
+      compat: {
+        supportsDeveloperRole: false,
+        supportsReasoningEffort: false,
+      },
+    },
+  ],
+};
+
 export function getProviders(): ProviderInfo[] {
-  return Object.values(REGISTRY as unknown as Record<string, ProviderInfo>).map(
-    (p) => ({ ...p, label: LABEL[p.id] ?? p.id }),
-  );
+  const cloud = Object.values(
+    REGISTRY as unknown as Record<string, ProviderInfo>,
+  ).map((p) => ({ ...p, label: LABEL[p.id] ?? p.id }));
+  return [...cloud, CHROME_AI_PROVIDER];
 }
 
 export function getProvider(providerId: string): ProviderInfo | null {
+  if (providerId === CHROME_AI_PROVIDER_ID) return CHROME_AI_PROVIDER;
   return (
     (REGISTRY as unknown as Record<string, ProviderInfo>)[providerId] ?? null
   );

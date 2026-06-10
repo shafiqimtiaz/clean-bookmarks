@@ -82,7 +82,7 @@ textarea:focus-visible,
 .page {
   max-width: 980px;
   margin: 0 auto;
-  padding: 48px 40px 80px;
+  padding: 48px 48px 80px;
 }
 
 /* ============ TOP BAR ============ */
@@ -662,7 +662,7 @@ a.iconbtn svg {
 .scope-badges {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: 10px;
   margin-bottom: 8px;
   max-height: 130px; /* ~3 badge rows */
   overflow-y: auto;
@@ -1024,7 +1024,7 @@ ul.tree > li:hover {
 }
 
 .field {
-  margin-bottom: 18px;
+  margin-bottom: 22px;
 }
 .field > .label {
   display: block;
@@ -1127,7 +1127,7 @@ select.input option {
 .grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: 8px;
+  gap: 10px;
   max-height: 188px;
   overflow-y: auto;
   padding-right: 4px;
@@ -1145,6 +1145,12 @@ select.input option {
   transition:
     border-color 0.12s ease,
     background 0.12s ease;
+  position: relative;
+}
+.tile .mark {
+  transition:
+    transform 0.12s ease,
+    box-shadow 0.12s ease;
 }
 .tile:hover {
   border-color: var(--ink);
@@ -1182,6 +1188,166 @@ select.input option {
 }
 html[data-theme="dark"] .tile .nm {
   color: var(--ink);
+}
+
+/* Browser Model tile: solid coral mark + brutalist offset shadow so it
+   reads as a deliberately different category from the cloud providers. */
+.tile.local .mark {
+  width: 38px;
+  height: 38px;
+  background: var(--coral);
+  color: var(--coral-ink);
+  border: 2px solid var(--coral-deep);
+  box-shadow: 3px 3px 0 var(--coral-deep);
+}
+.tile.local .mark-spark {
+  width: 22px;
+  height: 22px;
+  display: block;
+}
+.tile.local:hover .mark {
+  transform: translate(-1px, -1px);
+  box-shadow: 4px 4px 0 var(--coral-deep);
+}
+.tile.local.sel .mark {
+  background: var(--coral-deep);
+  border-color: var(--ink);
+  color: var(--coral-ink);
+  box-shadow: 3px 3px 0 var(--ink);
+}
+.tile.local .nm {
+  color: var(--ink);
+  font-weight: 600;
+}
+.tile.local::after {
+  content: "ON-DEVICE";
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  padding: 1px 5px;
+  font-family: var(--mono);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--coral-ink);
+  background: var(--amber);
+  border-radius: var(--r);
+  pointer-events: none;
+}
+.tile {
+  position: relative;
+}
+
+/* Device compatibility report for Browser Model */
+#deviceCompat {
+  margin-top: 16px;
+  border-top: 1px solid var(--line-soft);
+  padding-top: 12px;
+}
+.cpt-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+.cpt-title {
+  font-family: var(--mono);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.cpt-stamp {
+  font-family: var(--mono);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 2px 7px;
+  border-radius: var(--r);
+}
+.cpt-stamp.ok { background: var(--success); color: #fff; }
+.cpt-stamp.warn { background: var(--warning); color: #fff; }
+.cpt-stamp.err { background: var(--danger); color: #fff; }
+.cpt-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 6px 0;
+  font-family: var(--mono);
+  font-size: 11.5px;
+  border-bottom: 1px solid var(--line-soft);
+}
+.cpt-row:last-child {
+  border-bottom: none;
+}
+.cpt-ico {
+  width: 18px;
+  flex-shrink: 0;
+  font-size: 13px;
+  text-align: center;
+}
+.cpt-ico { color: var(--muted); }
+.cpt-row.ok .cpt-ico { color: var(--success); }
+.cpt-row.err .cpt-ico { color: var(--danger); }
+.cpt-row.unk .cpt-ico { color: var(--muted); }
+.cpt-label {
+  width: 130px;
+  flex-shrink: 0;
+  font-weight: 600;
+  color: var(--ink);
+}
+.cpt-detected {
+  flex: 1;
+  color: var(--ink-2);
+}
+.cpt-required {
+  color: var(--muted);
+  font-size: 10px;
+  text-align: right;
+}
+
+/* Chrome browser AI runtime status, rendered under the model select. */
+.chrome-ai-status.ok {
+  color: var(--success);
+  font-weight: 600;
+}
+.chrome-ai-status.warn {
+  color: var(--warning);
+  font-weight: 500;
+}
+.chrome-ai-status.err {
+  color: var(--danger);
+  font-weight: 500;
+}
+
+/* Flag-enablement buttons in the device-compat report */
+.cpt-fix {
+  margin-top: 8px;
+  padding-top: 10px;
+  border-top: 1px solid var(--line-soft);
+}
+.btn-flag {
+  display: inline-block;
+  padding: 6px 12px;
+  margin: 0 6px 6px 0;
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--coral-ink);
+  background: var(--coral);
+  border: 2px solid var(--coral-deep);
+  border-radius: var(--r);
+  cursor: pointer;
+  transition: background 0.1s ease, transform 0.1s ease;
+}
+.btn-flag:hover {
+  background: var(--coral-deep);
+}
+.btn-flag:active {
+  transform: translate(1px, 1px);
 }
 
 /* key input with reveal */
