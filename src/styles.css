@@ -134,7 +134,8 @@ h1 {
   border: 1.5px solid var(--line-soft);
   padding: 3px 7px;
   letter-spacing: 0.04em;
-  align-self: flex-start;
+  vertical-align: middle;
+  margin-left: 8px;
 }
 .actions {
   display: flex;
@@ -161,6 +162,12 @@ h1 {
 }
 .iconbtn:hover svg {
   stroke: var(--coral-ink);
+}
+a.iconbtn {
+  text-decoration: none;
+}
+a.iconbtn svg {
+  stroke: none;
 }
 .iconbtn svg {
   width: 22px;
