@@ -8,7 +8,7 @@
 
   [Overview](#overview) • [Features](#features) • [How it works](#how-it-works) • [Get started](#get-started) • [Project layout](#project-layout) • [Privacy](#privacy)
 
-  **[▶ Try it online](https://shafiqimtiaz.github.io/clean-bookmarks/)**
+  **[▶ Try it online](https://shafiqimtiaz.github.io/clean-bookmarks/)** • **[⬇ Install from Chrome Web Store](https://chromewebstore.google.com/detail/akjmeddnbohjephmppkmifnljehfhkpb)**
 </div>
 
 ---
