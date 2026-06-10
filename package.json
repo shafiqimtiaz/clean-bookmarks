@@ -4,7 +4,7 @@
   "type": "module",
   "private": true,
   "engines": {
-    "node": ">=18"
+    "node": ">=20.19.0"
   },
   "scripts": {
     "sync-models": "tsx scripts/sync-models.ts",
@@ -16,6 +16,7 @@
     "release": "release-it"
   },
   "devDependencies": {
+    "@release-it/conventional-changelog": "^11.0.1",
     "@types/chrome": "latest",
     "@types/node": "latest",
     "esbuild": "^0.24.0",

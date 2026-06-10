@@ -8,7 +8,7 @@
 
   [Overview](#overview) • [Features](#features) • [How it works](#how-it-works) • [Get started](#get-started) • [Project layout](#project-layout) • [Privacy](#privacy)
 
-  **[▶ Try it online](https://shafiqimtiaz.github.io/clean-bookmarks/)**
+  **[▶ Try it online](https://shafiqimtiaz.github.io/clean-bookmarks/)** • **[⬇ Install from Chrome Web Store](https://chromewebstore.google.com/detail/akjmeddnbohjephmppkmifnljehfhkpb)**
 </div>
 
 ---
@@ -20,7 +20,9 @@ Clean Bookmarks turns a messy bookmark collection into a clean, categorized fold
 No backend. No account. No data store. Your bookmarks stay in your browser; the only thing that ever leaves your device is bookmark titles and URLs, sent to the AI endpoint **you** configure.
 
 > [!NOTE]
-> Ships with a curated catalog of 13 first-party, key-based providers — Anthropic, OpenAI, Google Gemini, Mistral, DeepSeek, Groq, Cerebras, xAI, Together, Fireworks, Moonshot (Kimi), MiniMax, and Z.AI — across 5 native APIs (Anthropic Messages, Google Generative AI, Mistral, OpenAI Responses, and OpenAI-compatible). Aggregators, OAuth-only services, and local-only runtimes (Ollama, LM Studio) are intentionally excluded.
+> Ships with a curated catalog of 13 first-party, key-based providers — Anthropic, OpenAI, Google Gemini, Mistral, DeepSeek, Groq, Cerebras, xAI, Together, Fireworks, Moonshot (Kimi), MiniMax, and Z.AI — across 5 native APIs (Anthropic Messages, Google Generative AI, Mistral, OpenAI Responses, and OpenAI-compatible). Aggregators and OAuth-only services are intentionally excluded.
+>
+> When loaded in Chrome, a "Browser Model" tile is added to the provider grid — it uses Chrome's on-device Gemini Nano via the Prompt API, so no API key or host permission is required. Aggregator-style local runtimes (Ollama, LM Studio) are still excluded since they need a wildcard host permission.
 
 ---
 
@@ -32,6 +34,7 @@ No backend. No account. No data store. Your bookmarks stay in your browser; the 
 - **Non-destructive** — the Bookmarks Bar and Other Bookmarks roots are never moved. Named folders inside them are flattened into the new structure (and emptied); folders you mark as "exclude" are left exactly as they were.
 - **One-click undo** — the current bookmark layout is snapshotted before any change. A single click restores it.
 - **Bring your own key** — your API key is stored in `chrome.storage.local` and is never synced. No install-time host permissions; access to your endpoint is granted per-origin on first use.
+- **Browser Chrome AI** — on Chrome, pick "Browser Model" and the on-device Gemini Nano runs the organize pass locally. No key, no endpoint, no per-run cost. The tile only shows up when the Prompt API is available; status (`available` / `downloadable` / etc.) is shown in Settings.
 - **Cost estimate** — see the expected number of API calls, tokens, and dollar cost before you spend anything.
 - **Resilient execution** — requests are batched with bounded concurrency, automatic retries, and a safe `Unsorted` fallback for anything the model can't confidently place.
 

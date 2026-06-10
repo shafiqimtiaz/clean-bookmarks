@@ -1,6 +1,7 @@
 import { getSettings } from "../core/storage";
 import { send } from "../core/messaging";
 import { focusOrCreate } from "../core/tabs";
+import { CHROME_AI_PROVIDER_ID, hasChromeAiApi } from "../core/ai/chrome-ai";
 
 // Honor the theme chosen in the main app (shared via localStorage), else OS.
 document.documentElement.dataset.theme =
@@ -12,10 +13,17 @@ const $ = <T extends HTMLElement>(id: string) =>
 const status = $("status");
 const undoBtn = $<HTMLButtonElement>("undo");
 
+// A provider is ready to run when: an API key is set (cloud) or the
+// Chrome browser AI is selected (on-device, no key needed).
+function isProviderReady(s: Awaited<ReturnType<typeof getSettings>>): boolean {
+  if (s.provider === CHROME_AI_PROVIDER_ID) return hasChromeAiApi();
+  return !!s.apiKey;
+}
+
 async function init() {
   const settings = await getSettings();
-  if (!settings.apiKey) {
-    status.textContent = "Set your API key in Settings to begin.";
+  if (!isProviderReady(settings)) {
+    status.textContent = "Open Settings to choose a model and add any required API key.";
   }
   const snap = await send<{ has: boolean }>({ type: "HAS_SNAPSHOT" });
   if (snap.ok && snap.data.has) undoBtn.hidden = false;

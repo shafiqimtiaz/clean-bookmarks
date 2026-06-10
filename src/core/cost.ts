@@ -1,6 +1,7 @@
 import type { FlatBookmark, Settings } from "./types";
 import { getModel } from "./providers";
 import type { SlimModel } from "./providers";
+import { CHROME_AI_PROVIDER_ID } from "./ai/chrome-ai";
 
 export const BATCH_SIZE = 100;
 export const CONCURRENCY = 3;
@@ -17,6 +18,8 @@ export interface CostEstimate {
 }
 
 function pricingFor(settings: Settings): { in: number; out: number } {
+  // Chrome browser model is free to run.
+  if (settings.provider === CHROME_AI_PROVIDER_ID) return { in: 0, out: 0 };
   if (!settings.apiKey) {
     return { in: 0, out: 0 };
   }

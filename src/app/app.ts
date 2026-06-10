@@ -10,6 +10,16 @@ import {
 import { hasHostPermission, requestHostPermission } from "../core/permissions";
 import { getProviders, getProvider, getModel } from "../core/providers";
 import { complete } from "../core/ai/provider";
+import {
+  CHROME_AI_MODEL_ID,
+  CHROME_AI_PROVIDER_ID,
+  checkDeviceCompatibility,
+  getChromeAiStatus,
+  hasChromeAiApi,
+  statusHint,
+  type ChromeAiStatus,
+  type DeviceCompatibility,
+} from "../core/ai/chrome-ai";
 import { DEFAULT_TAXONOMY_PROMPT } from "../core/ai/pass1-taxonomy";
 import { UNSORTED_FOLDER } from "../core/types";
 import type { Assignment, RunState, Settings, Taxonomy } from "../core/types";
@@ -80,7 +90,12 @@ function openSettingsView() {
   sview.classList.add("open");
   sview.scrollTop = 0;
   document.body.style.overflow = "hidden";
-  initSettings();
+  void initSettings();
+}
+
+async function refreshChromeAiDetection(): Promise<void> {
+  chromeAiApiAvailable = hasChromeAiApi();
+  chromeAiStatus = chromeAiApiAvailable ? await getChromeAiStatus() : "unsupported";
 }
 function closeSettingsView() {
   sview.classList.remove("open");
@@ -100,7 +115,7 @@ document.addEventListener("keydown", (e) => {
 async function boot() {
   const settings = await getSettings();
   await renderStatus(settings);
-  if (!settings.consentAt || !settings.apiKey) {
+  if (!settings.consentAt || !isProviderConfigured(settings)) {
     show("consent");
     return;
   }
@@ -108,21 +123,25 @@ async function boot() {
 }
 
 async function renderStatus(s: Settings) {
-  const matched = ALL.find((p) => p.id === s.provider);
-  const label = matched?.label ?? s.provider;
-  const modelName = getModel(s.provider, s.model)?.name || s.model || "—";
-  $("statusMark").textContent = s.apiKey ? monogram(label) : "··";
-  $("statusProvider").textContent = s.apiKey ? label : "Not configured";
-  $("statusModel").textContent = s.apiKey ? modelName : "—";
+  const label = providerLabel(s);
+  const isLocal = s.provider === CHROME_AI_PROVIDER_ID;
+  const modelName = isLocal
+    ? "Gemini Nano (on-device)"
+    : getModel(s.provider, s.model)?.name || s.model || "—";
+  $("statusMark").textContent = isProviderConfigured(s) ? monogram(label) : "··";
+  $("statusProvider").textContent = isProviderConfigured(s)
+    ? label
+    : "Not configured";
+  $("statusModel").textContent = isProviderConfigured(s) ? modelName : "—";
   const pill = $("statusPill");
   const txt = $("statusPillText");
-  const connected = !!s.apiKey && (await hasHostPermission(s));
+  const connected = isProviderConfigured(s) && (await hasHostPermission(s));
   if (connected) {
     pill.classList.remove("off");
-    txt.textContent = "Connected";
+    txt.textContent = isLocal ? "On-device" : "Connected";
   } else {
     pill.classList.add("off");
-    txt.textContent = s.apiKey ? "No access" : "No key";
+    txt.textContent = isProviderConfigured(s) ? "No access" : "No key";
   }
 }
 
@@ -210,6 +229,9 @@ function fmtTokens(n: number): string {
 }
 
 function settingsLabel(s: Settings): string {
+  if (s.provider === CHROME_AI_PROVIDER_ID) {
+    return "Browser Model / Gemini Nano (on-device)";
+  }
   const p = getProvider(s.provider);
   const m = getModel(s.provider, s.model);
   return m ? `${p ? LABEL_OF(p.id) : s.provider} / ${m.name}` : s.model;
@@ -222,7 +244,7 @@ $("consentBtn").addEventListener(
   "click",
   guard(async () => {
     const settings = await getSettings();
-    if (!settings.apiKey) {
+    if (!isProviderConfigured(settings)) {
       openSettingsView();
       return;
     }
@@ -502,9 +524,28 @@ function fail(error: string) {
   show("result");
 }
 
+// A provider counts as configured when the user has the prerequisites to
+// call it: an API key for cloud providers, or the browser Chrome AI
+// runtime. (We don't gate on LanguageModel.availability() at boot — the
+// status is surfaced through the status strip / Test button instead.)
+function isProviderConfigured(s: Settings): boolean {
+  if (s.provider === CHROME_AI_PROVIDER_ID) return hasChromeAiApi();
+  return !!s.apiKey;
+}
+
+function providerLabel(s: Settings): string {
+  if (s.provider === CHROME_AI_PROVIDER_ID) return "Browser Model";
+  const matched = ALL.find((p) => p.id === s.provider);
+  return matched?.label ?? s.provider;
+}
+
 // ── Settings panel ──
 let keys: Record<string, string> = {};
 let currentProvider = "openai";
+// Cached at settings-open time so the provider grid can hide the
+// "Browser Model" tile on browsers that don't expose the API.
+let chromeAiApiAvailable = false;
+let chromeAiStatus: ChromeAiStatus = "unsupported";
 
 const provGrid = $("provGrid");
 const provSearch = $<HTMLInputElement>("provSearch");
@@ -542,6 +583,144 @@ function fillModels(providerId: string, selected?: string) {
       : (models[0]?.id ?? "");
 }
 
+// Show / hide chrome-ai extras around the model select. The model select
+// stays visible (so the user sees "Gemini Nano") but the API key field and
+// the base URL disappear — the on-device model needs neither.
+function applyLocalProviderChrome(): void {
+  const isLocal = currentProvider === CHROME_AI_PROVIDER_ID;
+  // Hide the API Key field (whole `.field` block) when local.
+  const apiKeyField = apiKeyInput.closest<HTMLElement>(".field");
+  if (apiKeyField) apiKeyField.hidden = isLocal;
+  // "Clear Stored Key" only makes sense for cloud providers.
+  $("clearKey").hidden = isLocal;
+  // Show chrome-ai runtime status under the model picker.
+  const statusEl = $("chromeAiStatus");
+  if (statusEl) {
+    statusEl.hidden = !isLocal;
+    if (isLocal) {
+      statusEl.textContent = statusHint(chromeAiStatus);
+      statusEl.className =
+        "help chrome-ai-status " +
+        (chromeAiStatus === "available"
+          ? "ok"
+          : chromeAiStatus === "unsupported" || chromeAiStatus === "unavailable"
+            ? "err"
+            : "warn");
+    }
+  }
+  // Device compatibility report — auto-rendered when the local tile is active.
+  const compatEl = $("deviceCompat");
+  if (compatEl) {
+    if (isLocal) {
+      checkDeviceCompatibility().then((report) => renderDeviceReport(report));
+    } else {
+      compatEl.hidden = true;
+    }
+  }
+}
+
+// Render the device-compatibility grid shown under the model picker when
+// "Browser Model" is the active provider.
+function renderDeviceReport(report: DeviceCompatibility): void {
+  const el = $("deviceCompat");
+  el.hidden = false;
+  el.replaceChildren();
+  const verdict = report.overall === "pass" ? "Ready" : report.overall === "fail" ? "Incompatible" : report.overall === "partial" ? "Check required" : "Unknown";
+  const stampCls = report.overall === "pass" ? "ok" : report.overall === "fail" ? "err" : "warn";
+  const head = document.createElement("div");
+  head.className = "cpt-head";
+  const title = document.createElement("span");
+  title.className = "cpt-title";
+  title.textContent = "Device Compatibility";
+  const stamp = document.createElement("span");
+  stamp.className = "cpt-stamp " + stampCls;
+  stamp.textContent = verdict;
+  head.append(title, stamp);
+  el.appendChild(head);
+
+  // Build a compact table: label : detected (required) — pass/ fail icon.
+  for (const row of report.rows) {
+    const cls = row.pass === true ? "ok" : row.pass === false ? "err" : "unk";
+    const ico = row.pass === true ? "✓" : row.pass === false ? "✗" : "—";
+    const rowEl = document.createElement("div");
+    rowEl.className = "cpt-row " + cls;
+
+    const iconEl = document.createElement("span");
+    iconEl.className = "cpt-ico";
+    iconEl.textContent = ico;
+    const labelEl = document.createElement("span");
+    labelEl.className = "cpt-label";
+    labelEl.textContent = row.label;
+    const detectedEl = document.createElement("span");
+    detectedEl.className = "cpt-detected";
+    detectedEl.textContent = row.detected;
+    const requiredEl = document.createElement("span");
+    requiredEl.className = "cpt-required";
+    requiredEl.textContent = row.required;
+
+    rowEl.append(iconEl, labelEl, detectedEl, requiredEl);
+    el.appendChild(rowEl);
+  }
+
+  if (report.flagsMissing) {
+    const fix = document.createElement("div");
+    fix.className = "cpt-fix";
+
+    const warn = document.createElement("p");
+    warn.className = "help";
+    warn.style.margin = "10px 0 8px";
+    warn.style.color = "var(--danger)";
+    warn.style.fontWeight = "600";
+    warn.textContent = "Chrome flags need to be enabled";
+
+    const modelBtn = document.createElement("button");
+    modelBtn.className = "btn-flag";
+    modelBtn.dataset.flag = "optimization-guide-on-device-model";
+    modelBtn.textContent = "Enable on-device model";
+    modelBtn.addEventListener("click", () => {
+      chrome.tabs.create({
+        url:
+          "chrome://flags/#" +
+          encodeURIComponent(modelBtn.dataset.flag ?? ""),
+      });
+    });
+
+    const promptBtn = document.createElement("button");
+    promptBtn.className = "btn-flag";
+    promptBtn.dataset.flag = "prompt-api-for-gemini-nano";
+    promptBtn.textContent = "Enable Prompt API";
+    promptBtn.addEventListener("click", () => {
+      chrome.tabs.create({
+        url:
+          "chrome://flags/#" +
+          encodeURIComponent(promptBtn.dataset.flag ?? ""),
+      });
+    });
+
+    const note = document.createElement("p");
+    note.className = "help";
+    note.style.margin = "8px 0 0";
+    note.style.fontSize = "10px";
+    note.textContent =
+      "Opens chrome://flags/ pages. Set each flag to Enabled and relaunch.";
+
+    fix.append(warn, modelBtn, document.createTextNode(" "), promptBtn, note);
+    el.appendChild(fix);
+  }
+
+  if (report.gpuNote) {
+    const fix = document.createElement("div");
+    fix.className = "cpt-fix";
+    const note = document.createElement("p");
+    note.className = "help";
+    note.style.margin = "10px 0 8px";
+    note.style.color = "var(--warning)";
+    note.textContent = report.gpuNote;
+    fix.appendChild(note);
+    el.appendChild(fix);
+  }
+}
+
 function chosenModel(): string {
   return modelSelect.value.trim();
 }
@@ -549,11 +728,33 @@ function chosenModel(): string {
 function renderProviderGrid(filter = "") {
   const f = filter.toLowerCase();
   provGrid.innerHTML = "";
-  for (const p of ALL.filter((x) => x.label.toLowerCase().includes(f))) {
+  const visible = ALL.filter(
+    (x) =>
+      x.label.toLowerCase().includes(f) &&
+      (x.id !== CHROME_AI_PROVIDER_ID || chromeAiApiAvailable),
+  );
+  // Browser Model at the end — cloud providers first.
+  const sorted = [
+    ...visible.filter((p) => p.id !== CHROME_AI_PROVIDER_ID),
+    ...visible.filter((p) => p.id === CHROME_AI_PROVIDER_ID),
+  ];
+  for (const p of sorted) {
     const tile = document.createElement("button");
     tile.type = "button";
-    tile.className = "tile" + (p.id === currentProvider ? " sel" : "");
-    const mark = monogram(p.label);
+    const isLocal = p.id === CHROME_AI_PROVIDER_ID;
+    tile.className =
+      "tile" +
+      (p.id === currentProvider ? " sel" : "") +
+      (isLocal ? " local" : "");
+    tile.title = isLocal
+      ? "Runs on-device using Chrome's on-device Gemini Nano. No API key needed."
+      : "";
+    // Browser Model gets a dedicated sparkle mark so the tile reads
+    // immediately as the on-device option. SVG inlined to avoid an
+    // extra request and to inherit `currentColor` for theme switching.
+    const mark = isLocal
+      ? '<svg class="mark-spark" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 1.6l1.95 7.45L21.4 11l-7.45 1.95L12 20.4l-1.95-7.45L2.6 11l7.45-1.95z"/><circle cx="19.2" cy="4.8" r="1.5"/><circle cx="4.8" cy="19.2" r="1.5"/></svg>'
+      : monogram(p.label);
     tile.innerHTML = `<span class="mark">${mark}</span><span class="nm">${p.label}</span>`;
     tile.addEventListener("click", () => selectProvider(p.id));
     provGrid.appendChild(tile);
@@ -562,11 +763,16 @@ function renderProviderGrid(filter = "") {
 
 function selectProvider(id: string) {
   if (id === currentProvider) return;
-  keys[currentProvider] = apiKeyInput.value.trim();
+  // Stash the key for the outgoing provider so switching back restores it.
+  // (No-op for chrome-ai — there's no key to save.)
+  if (currentProvider !== CHROME_AI_PROVIDER_ID) {
+    keys[currentProvider] = apiKeyInput.value.trim();
+  }
   currentProvider = id;
-  apiKeyInput.value = keys[id] ?? "";
+  apiKeyInput.value = id === CHROME_AI_PROVIDER_ID ? "" : (keys[id] ?? "");
   const preset = getProvider(id);
   fillModels(id, preset?.models[0]?.id);
+  applyLocalProviderChrome();
   renderProviderGrid(provSearch.value);
   resetTestStatus();
 }
@@ -585,21 +791,41 @@ function resetTestStatus() {
 }
 
 function formSettings(base: Settings): Settings {
+  const isLocal = currentProvider === CHROME_AI_PROVIDER_ID;
   return {
     ...base,
     provider: currentProvider,
-    model: chosenModel() || base.model,
-    baseUrl: getProvider(currentProvider)?.baseUrl ?? base.baseUrl,
-    apiKey: apiKeyInput.value.trim(),
+    model: isLocal
+      ? CHROME_AI_MODEL_ID
+      : chosenModel() || base.model,
+    baseUrl: isLocal ? "" : getProvider(currentProvider)?.baseUrl ?? base.baseUrl,
+    apiKey: isLocal ? "" : apiKeyInput.value.trim(),
   };
 }
 
 $("testBtn").addEventListener("click", async () => {
   const tentative = formSettings(await getSettings());
-  if (!tentative.apiKey) {
+  const isLocal = tentative.provider === CHROME_AI_PROVIDER_ID;
+  if (!isLocal && !tentative.apiKey) {
     testStatus.className = "teststatus err show";
     testStatus.textContent = "✗ Enter an API key first";
     return;
+  }
+  // For the on-device model, re-poll availability right before the test
+  // so the user sees the current state (a download may have just finished).
+  if (isLocal) {
+    chromeAiStatus = await getChromeAiStatus();
+    applyLocalProviderChrome();
+    if (chromeAiStatus === "unsupported") {
+      testStatus.className = "teststatus err show";
+      testStatus.textContent = "✗ Chrome browser AI is not enabled. See chrome://flags";
+      return;
+    }
+    if (chromeAiStatus === "unavailable") {
+      testStatus.className = "teststatus err show";
+      testStatus.textContent = "✗ Device does not support on-device AI";
+      return;
+    }
   }
   testStatus.className = "teststatus run show";
   testStatus.innerHTML = '<span class="spin"></span> Testing…';
@@ -619,7 +845,9 @@ $("testBtn").addEventListener("click", async () => {
     );
     const ms = Math.round(performance.now() - t0);
     testStatus.className = "teststatus ok show";
-    testStatus.textContent = `✓ Connected · ${ms}ms`;
+    testStatus.textContent = isLocal
+      ? `✓ On-device ready · ${ms}ms`
+      : `✓ Connected · ${ms}ms`;
   } catch (e) {
     testStatus.className = "teststatus err show";
     testStatus.textContent =
@@ -641,6 +869,7 @@ $("clearKey").addEventListener("click", () => {
 
 async function initSettings() {
   resetTestStatus();
+  await refreshChromeAiDetection();
   const s = await getSettings();
   const providerId = s.provider;
   keys = { ...s.apiKeys };
@@ -648,16 +877,19 @@ async function initSettings() {
   currentProvider = providerId;
   provSearch.value = "";
   renderProviderGrid();
-  apiKeyInput.value = keys[providerId] ?? "";
+  apiKeyInput.value =
+    providerId === CHROME_AI_PROVIDER_ID ? "" : (keys[providerId] ?? "");
   apiKeyInput.type = "password";
   fillModels(providerId, s.model);
+  applyLocalProviderChrome();
   prompt.value = s.taxonomyPrompt || DEFAULT_TAXONOMY_PROMPT;
 }
 
 $("saveSettings").addEventListener("click", async () => {
   const id = currentProvider;
-  const url = getProvider(id)?.baseUrl ?? "";
-  const model = chosenModel();
+  const isLocal = id === CHROME_AI_PROVIDER_ID;
+  const url = isLocal ? "" : (getProvider(id)?.baseUrl ?? "");
+  const model = isLocal ? CHROME_AI_MODEL_ID : chosenModel();
   const tentative: Settings = {
     ...(await getSettings()),
     provider: id,
@@ -671,8 +903,8 @@ $("saveSettings").addEventListener("click", async () => {
       return;
     }
   }
-  const key = apiKeyInput.value.trim();
-  keys[id] = key;
+  const key = isLocal ? "" : apiKeyInput.value.trim();
+  if (!isLocal) keys[id] = key;
   const next = await saveSettings({
     provider: id,
     model,
