@@ -1,5 +1,7 @@
 # Changelog
 
+## [1.2.0](https://github.com/shafiqimtiaz/clean-bookmarks/compare/v1.1.1...v1.2.0) (2026-06-11)
+
 All notable changes to Clean Bookmarks are documented in this file.
 
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
