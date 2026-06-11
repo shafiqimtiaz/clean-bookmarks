@@ -22,6 +22,7 @@
     }
   },
   "hooks": {
-    "after:bump": "npm run build && npm run zip"
+    "after:bump": "npm run build && npm run zip",
+    "after:release": "rm -f clean-bookmarks-v*.zip"
   }
 }
