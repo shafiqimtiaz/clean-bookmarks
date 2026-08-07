@@ -1,6 +1,5 @@
 import type { FlatBookmark, Settings } from "./types";
 import { getModel } from "./providers";
-import type { SlimModel } from "./providers";
 import { CHROME_AI_PROVIDER_ID } from "./ai/chrome-ai";
 
 export const BATCH_SIZE = 100;
@@ -50,9 +49,4 @@ export function estimateCost(
 
 function round(n: number): number {
   return Math.round(n * 1000) / 1000;
-}
-
-// Re-export so other modules can fetch the resolved model from one place.
-export function modelFor(settings: Settings): SlimModel | null {
-  return getModel(settings.provider, settings.model);
 }

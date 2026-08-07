@@ -1,6 +1,5 @@
 import {
   applyOrganization,
-  countScope,
   readScope,
   restoreSnapshot,
   snapshotScope,
@@ -9,7 +8,6 @@ import { clearSnapshot, getSnapshot, saveSnapshot } from "../core/storage";
 import { focusOrCreate } from "../core/tabs";
 import type {
   ApplyResult,
-  CountScopeResult,
   Message,
   ReadScopeResult,
   Response,
@@ -36,10 +34,6 @@ async function handle(msg: Message): Promise<unknown> {
     case "READ_SCOPE": {
       const result = await readScope(msg.excludedFolderNames ?? []);
       return result satisfies ReadScopeResult;
-    }
-
-    case "COUNT_SCOPE": {
-      return (await countScope()) satisfies CountScopeResult;
     }
 
     case "APPLY": {
@@ -76,8 +70,7 @@ async function handle(msg: Message): Promise<unknown> {
   }
 }
 
-// Open the full-page app when the user clicks the toolbar icon's "Organize".
-// (Popup handles the click; this is a fallback if no popup is set.)
+// Open the full-page app when the user clicks the toolbar icon (no popup is set).
 chrome.action.onClicked?.addListener(() => {
   focusOrCreate(chrome.runtime.getURL("app.html"));
 });

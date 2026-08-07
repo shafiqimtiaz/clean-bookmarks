@@ -4,7 +4,6 @@ import { getSettings, saveSettings } from "../core/storage";
 import {
   send,
   type ApplyResult,
-  type CountScopeResult,
   type ReadScopeResult,
 } from "../core/messaging";
 import { hasHostPermission, requestHostPermission } from "../core/permissions";
@@ -153,8 +152,7 @@ async function showHome() {
 
   folderNames = read.data.folderNames;
 
-  const counts = await send<CountScopeResult>({ type: "COUNT_SCOPE" });
-  if (counts.ok) renderSituation(counts.data, settings);
+  renderSituation(read.data, settings);
   show("situation");
 
   if (folderNames.length > 0) {
@@ -197,7 +195,7 @@ function renderFolderScope(names: string[], excluded: string[]) {
   }
 }
 
-function renderSituation(c: CountScopeResult, s: Settings) {
+function renderSituation(c: ReadScopeResult, s: Settings) {
   const loose = c.looseBar + c.looseOther;
   $("segJunkNum").textContent = String(loose);
   $("segOrgNum").textContent = String(c.foldered);
@@ -207,7 +205,7 @@ function renderSituation(c: CountScopeResult, s: Settings) {
   $("legOrg").textContent = String(c.foldered);
   $("bdOther").textContent = String(c.looseOther);
   $("bdBar").textContent = String(c.looseBar);
-  $("bdTotal").textContent = String(c.total);
+  $("bdTotal").textContent = String(c.looseBar + c.looseOther + c.foldered);
   $("lastrunText").textContent = lastCleanupLabel(s.lastCleanupAt);
 }
 

@@ -19,18 +19,25 @@ const BOOKMARKS_BAR_ID = "1";
 export async function readScope(excludedFolderNames: string[] = []): Promise<{
   bookmarks: FlatBookmark[];
   scopeParentIds: string[];
-  folderNames: string[];
+  folderNames: string[]; // user's top-level folder names -> seed categories
+  looseBar: number; // loose items directly on the Bookmarks Bar
+  looseOther: number; // loose items directly under Other Bookmarks
+  foldered: number; // items inside named folders
 }> {
   const scopeParentIds = [OTHER_BOOKMARKS_ID, BOOKMARKS_BAR_ID];
   const excluded = new Set(excludedFolderNames);
 
   const flat: FlatBookmark[] = [];
   const folderNames = new Set<string>();
+  let looseBar = 0;
+  let looseOther = 0;
+  let foldered = 0;
   let idx = 0;
 
   const collect = (node: chrome.bookmarks.BookmarkTreeNode, root: string) => {
     for (const child of node.children ?? []) {
       if (child.url) {
+        foldered++;
         flat.push({
           idx: idx++,
           id: child.id,
@@ -74,6 +81,8 @@ export async function readScope(excludedFolderNames: string[] = []): Promise<{
     }
     for (const child of root?.children ?? []) {
       if (child.url) {
+        if (effectiveId === BOOKMARKS_BAR_ID) looseBar++;
+        else looseOther++;
         flat.push({
           idx: idx++,
           id: child.id,
@@ -90,51 +99,13 @@ export async function readScope(excludedFolderNames: string[] = []): Promise<{
     }
   }
 
-  return { bookmarks: flat, scopeParentIds, folderNames: [...folderNames] };
-}
-
-// Lightweight count of the in-scope bookmarks, split by where they live now.
-// Loose = direct URL children of a root; foldered = anything inside a named
-// folder. Mirrors readScope's traversal so the totals match.
-export async function countScope(): Promise<{
-  looseBar: number;
-  looseOther: number;
-  foldered: number;
-  total: number;
-}> {
-  let looseBar = 0;
-  let looseOther = 0;
-  let foldered = 0;
-
-  const countFoldered = (node: chrome.bookmarks.BookmarkTreeNode) => {
-    for (const child of node.children ?? []) {
-      if (child.url) foldered++;
-      else countFoldered(child);
-    }
-  };
-
-  for (const parentId of [BOOKMARKS_BAR_ID, OTHER_BOOKMARKS_ID]) {
-    let root: chrome.bookmarks.BookmarkTreeNode | undefined;
-    try {
-      [root] = await chrome.bookmarks.getSubTree(parentId);
-    } catch {
-      continue;
-    }
-    for (const child of root?.children ?? []) {
-      if (child.url) {
-        if (parentId === BOOKMARKS_BAR_ID) looseBar++;
-        else looseOther++;
-      } else {
-        countFoldered(child);
-      }
-    }
-  }
-
   return {
+    bookmarks: flat,
+    scopeParentIds,
+    folderNames: [...folderNames],
     looseBar,
     looseOther,
     foldered,
-    total: looseBar + looseOther + foldered,
   };
 }
 
@@ -321,10 +292,6 @@ function compareNodes(
     sensitivity: "base",
     numeric: true,
   });
-}
-
-async function moveTo(id: string, parentId: string): Promise<void> {
-  await chrome.bookmarks.move(id, { parentId });
 }
 
 // Remove top-level folders under `rootId` that contain no bookmarks (and only

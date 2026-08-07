@@ -1,4 +1,4 @@
-import { taxonomyTool, TAXONOMY_HINT, taxonomySchema } from "./schema";
+import { taxonomyTool, taxonomySchema } from "./schema";
 import { parseJson } from "./parse-json";
 import { complete } from "./provider";
 import type { ToolCall } from "@earendil-works/pi-ai";

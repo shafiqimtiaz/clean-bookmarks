@@ -14,7 +14,6 @@ await mkdir(join(OUT, 'icons'), { recursive: true });
 await build({
   entryPoints: [
     'src/background/service-worker.ts',
-    'src/options/options.ts',
     'src/app/app.ts',
   ],
   outdir: OUT,
@@ -30,7 +29,7 @@ await build({
 await cp('src/styles.css', join(OUT, 'styles.css'));
 
 // HTML pages (kept next to their bundled JS by basename).
-for (const html of ['src/options/options.html', 'src/app/app.html']) {
+for (const html of ['src/app/app.html']) {
   await cp(html, join(OUT, html.split('/').pop()!));
 }
 

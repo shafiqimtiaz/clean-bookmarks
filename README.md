@@ -45,7 +45,7 @@ No backend. No account. No data store. Your bookmarks stay in your browser; the 
 The organize job runs as a small state machine inside a full-page extension tab. The service worker only brokers fast `chrome.bookmarks` API calls.
 
 ```
-Toolbar popup ──"Organize"──▶ Full-page tab (runs the long job)
+Toolbar icon ──"Organize"──▶ Full-page tab (runs the long job)
                                   │  READ_SCOPE / APPLY / UNDO
                                   ▼
                           Service worker ──▶ chrome.bookmarks
@@ -130,8 +130,7 @@ src/
 │   ├── cost.ts             Pre-run cost estimate
 │   └── ai/                 pi-ai runtime, TypeBox tool schemas, Zod parse-time schemas, taxonomy + assignment passes
 ├── app/                    Full-page tab: run engine and the organize flow
-├── popup/                  Toolbar popup: Organize, Undo, Settings
-└── options/                Settings page
+└── core/                   Shared logic (bookmarks, storage, AI runtime)
 ```
 
 ### Tech stack
