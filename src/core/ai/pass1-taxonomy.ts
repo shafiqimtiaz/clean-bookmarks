@@ -1,6 +1,7 @@
-import { taxonomyTool, taxonomySchema } from "./schema";
+import { taxonomyTool, TAXONOMY_HINT, taxonomySchema } from "./schema";
 import { parseJson } from "./parse-json";
 import { complete } from "./provider";
+import { CHROME_AI_PROVIDER_ID } from "./chrome-ai";
 import type { ToolCall } from "@earendil-works/pi-ai";
 import type { FlatBookmark, Settings, Taxonomy } from "../types";
 
@@ -30,6 +31,13 @@ export async function proposeTaxonomy(
   // User's edited prompt drives pass 1; else the default.
   const promptBase = settings.taxonomyPrompt?.trim() || DEFAULT_TAXONOMY_PROMPT;
 
+  // Chrome browser AI has no tool calls — the model must emit the taxonomy
+  // as JSON text, so the shape hint goes into the prompt itself.
+  const chromeAi = settings.provider === CHROME_AI_PROVIDER_ID;
+  const jsonHint = chromeAi
+    ? `\n\nRespond with ONLY a single JSON object, no markdown, no code fences, matching this shape exactly:\n${TAXONOMY_HINT}`
+    : "";
+
   const excluded = new Set(excludedFolderNames);
   const visibleHints = folderHints.filter((n) => !excluded.has(n));
 
@@ -54,8 +62,10 @@ export async function proposeTaxonomy(
     const result = await complete(settings, {
       systemPrompt:
         attempt === 0
-          ? promptBase
-          : `${promptBase}\n\nYou MUST call the propose_taxonomy tool with the categories. Do not reply with prose.`,
+          ? promptBase + jsonHint
+          : chromeAi
+            ? `${promptBase}${jsonHint}\n\nYour previous reply was not valid JSON. Output ONLY the JSON object.`
+            : `${promptBase}\n\nYou MUST call the propose_taxonomy tool with the categories. Do not reply with prose.`,
       messages: [
         {
           role: "user",
