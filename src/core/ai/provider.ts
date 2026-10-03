@@ -90,6 +90,7 @@ async function getStreamFn(api: string): Promise<StreamFn> {
 export interface CompleteOptions {
   signal?: AbortSignal;
   tools?: Context["tools"];
+  responseConstraint?: object;
   // Forwarded to the provider as the `maxTokens` (or provider equivalent).
   maxTokens?: number;
 }

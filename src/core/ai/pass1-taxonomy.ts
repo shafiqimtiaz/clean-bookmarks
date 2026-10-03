@@ -77,7 +77,7 @@ export async function proposeTaxonomy(
         },
       ],
       tools: [taxonomyTool],
-    });
+    }, chromeAi ? { responseConstraint: taxonomyTool.parameters } : {});
     usage.input += result.usage.input;
     usage.output += result.usage.output;
     usage.costUsd += result.usage.cost.total;

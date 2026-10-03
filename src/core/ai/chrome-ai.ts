@@ -49,7 +49,7 @@ interface ChromeLanguageModel {
 interface ChromeLanguageModelSession {
   prompt(
     input: string,
-    options?: { signal?: AbortSignal; responseConstraint?: unknown },
+    options?: { signal?: AbortSignal; responseConstraint?: object },
   ): Promise<string>;
   promptStreaming(
     input: string,
@@ -173,6 +173,7 @@ export async function completeChromeAi(
     void options.maxTokens; // explicitly unused
     const text = await session.prompt(userText, {
       signal: options.signal,
+      responseConstraint: options.responseConstraint,
     });
 
     return {
